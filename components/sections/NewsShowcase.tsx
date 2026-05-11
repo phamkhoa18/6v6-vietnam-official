@@ -7,10 +7,10 @@ import { Newspaper, ArrowRight, Clock, Eye, Flame } from "lucide-react";
 const mockPosts = [
     { _id: "1", title: "Khai mạc giải 6v6 Championship Mùa Hè 2026", slug: "khai-mac-6v6", excerpt: "Giải đấu quy tụ 16 đội bóng hàng đầu.", isPinned: true, views: 1520, publishedAt: "2026-05-06", author: { name: "Admin" } },
     { _id: "2", title: "Top 5 đội bóng 6v6 mạnh nhất hiện tại", slug: "top-5-doi-bong", views: 892, publishedAt: "2026-05-04" },
-    { _id: "3", title: "Hướng dẫn đăng ký đội bóng 6v6 từ A-Z", slug: "huong-dan-dang-ky", views: 2340, publishedAt: "2026-05-02" },
-    { _id: "4", title: "Cập nhật luật thi đấu 6v6 mùa mới", slug: "cap-nhat-luat", views: 654, publishedAt: "2026-04-28" },
+    { _id: "3", title: "Hướng dẫn đăng ký đội bóng sân 6 từ A-Z", slug: "huong-dan-dang-ky", views: 2340, publishedAt: "2026-05-02" },
+    { _id: "4", title: "Cập nhật luật thi đấu sân 6 mùa mới", slug: "cap-nhat-luat", views: 654, publishedAt: "2026-04-28" },
     { _id: "5", title: "Kết quả vòng bảng Saigon Open Cup #3", slug: "ket-qua-vong-bang", views: 1100, publishedAt: "2026-04-25" },
-    { _id: "6", title: "Chiến thuật 6v6 hiệu quả nhất 2026", slug: "chien-thuat-6v6", views: 3200, publishedAt: "2026-04-20" },
+    { _id: "6", title: "Chiến thuật sân 6 hiệu quả nhất 2026", slug: "chien-thuat-6v6", views: 3200, publishedAt: "2026-04-20" },
     { _id: "7", title: "Phỏng vấn đội trưởng đội vô địch", slug: "phong-van-vo-dich", views: 780, publishedAt: "2026-04-18" },
 ];
 
@@ -23,7 +23,7 @@ export function NewsShowcase() {
             <div className="max-w-[1200px] mx-auto px-6 lg:px-8">
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="flex items-end justify-between mb-8">
                     <div>
-                        <div className="flex items-center gap-2 mb-3"><div className="w-1 h-6 rounded-full bg-red-500" /><Flame className="w-4 h-4 text-red-500" /><span className="text-xs font-semibold text-red-500 uppercase tracking-wider">Tin mới nhất</span></div>
+                        <div className="flex items-center gap-2 mb-3"><div className="w-1 h-6 rounded-full bg-efb-red" /><Flame className="w-4 h-4 text-efb-red" /><span className="text-xs font-semibold text-efb-red uppercase tracking-wider">Tin mới nhất</span></div>
                         <h2 className="text-2xl sm:text-3xl font-semibold text-gray-900">Tin tức & Cập nhật</h2>
                     </div>
                     <Link href="/tin-tuc" className="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-efb-red hover:text-white hover:bg-efb-red border border-efb-red/20 hover:border-efb-red rounded-lg transition-all group">Xem tất cả<ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" /></Link>
@@ -34,7 +34,7 @@ export function NewsShowcase() {
                             <div className="w-full h-full bg-gradient-to-br from-slate-800 to-slate-900 flex items-center justify-center"><Newspaper className="w-16 h-16 text-white/10" /></div>
                             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
                             <div className="absolute bottom-0 left-0 right-0 p-5 lg:p-7">
-                                {hero.isPinned && <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-red-500 text-white text-[10px] font-semibold rounded uppercase tracking-wider mb-2.5"><Flame className="w-2.5 h-2.5" /> HOT</span>}
+                                {hero.isPinned && <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-efb-red text-white text-[10px] font-semibold rounded uppercase tracking-wider mb-2.5"><Flame className="w-2.5 h-2.5" /> HOT</span>}
                                 <h3 className="text-lg sm:text-xl lg:text-2xl font-semibold text-white leading-tight mb-2 group-hover:underline decoration-1 underline-offset-4">{hero.title}</h3>
                                 {hero.excerpt && <p className="text-sm text-white/60 line-clamp-2 mb-3 max-w-lg">{hero.excerpt}</p>}
                                 <div className="flex items-center gap-3 text-[11px] text-white/40">

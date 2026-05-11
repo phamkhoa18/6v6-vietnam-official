@@ -1,118 +1,97 @@
 "use client";
 
-import { motion } from "framer-motion";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { ArrowRight, Trophy, Sparkles } from "lucide-react";
+import { motion, useScroll, useTransform } from "framer-motion";
+import { useRef, useEffect, useState } from "react";
 
 export function HeroSection() {
+    const sectionRef = useRef<HTMLElement>(null);
+    const [isMounted, setIsMounted] = useState(false);
+
+    const { scrollYProgress } = useScroll({
+        target: sectionRef,
+        offset: ["start start", "end start"],
+    });
+
+    const bannerY = useTransform(scrollYProgress, [0, 1], ["0%", "12%"]);
+    const scaleValue = useTransform(scrollYProgress, [0, 1], [1, 1.06]);
+
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
+
     return (
-        <section className="relative min-h-[92vh] flex items-center overflow-hidden">
-            {/* Background — bright, warm gradient */}
-            <div className="absolute inset-0 bg-gradient-to-br from-[#DC2626] via-[#E53E3E] to-[#C53030]" />
+        <section
+            ref={sectionRef}
+            className="relative w-full overflow-hidden bg-white"
+        >
+            {/* Spacer to push banner below fixed navbar (h-18 = 72px) */}
+            <div className="h-12" />
 
-            {/* Warm light overlay for depth */}
-            <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/[0.04] to-orange-300/[0.08]" />
-
-            {/* Decorative mesh — soft & warm */}
-            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            {/* Banner wrapper */}
+            <div className="relative w-full">
                 <motion.div
-                    animate={{ scale: [1, 1.15, 1], opacity: [0.1, 0.2, 0.1] }}
-                    transition={{ duration: 8, repeat: Infinity }}
-                    className="absolute -top-32 right-0 w-[600px] h-[600px] bg-gradient-to-br from-amber-300/25 via-orange-300/15 to-transparent rounded-full blur-[80px]"
-                />
-                <motion.div
-                    animate={{ scale: [1.1, 1, 1.1], opacity: [0.08, 0.15, 0.08] }}
-                    transition={{ duration: 10, repeat: Infinity }}
-                    className="absolute bottom-0 -left-24 w-[400px] h-[400px] bg-gradient-to-tr from-rose-300/20 via-pink-300/10 to-transparent rounded-full blur-[60px]"
-                />
-                <motion.div
-                    animate={{ scale: [1, 1.1, 1], opacity: [0.05, 0.12, 0.05] }}
-                    transition={{ duration: 12, repeat: Infinity }}
-                    className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-gradient-to-r from-yellow-200/15 via-orange-300/10 to-transparent rounded-full blur-[80px]"
-                />
-            </div>
+                    className="relative w-full"
+                    style={{ y: bannerY, scale: scaleValue }}
+                >
+                    <video
+                        autoPlay
+                        loop
+                        muted
+                        playsInline
+                        className="w-full h-auto block"
+                    >
+                        <source src="/images/banner/banner_video.mp4" type="video/mp4" />
+                    </video>
+                </motion.div>
 
-            {/* Subtle pattern overlay */}
-            <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)', backgroundSize: '32px 32px' }} />
+                White fade at bottom — long smooth gradient, no hard edge
+                <div className="absolute bottom-0 left-0 right-0 h-48 pointer-events-none" style={{ background: 'linear-gradient(to top, white 0%, rgba(255,255,255,0.85) 20%, rgba(255,255,255,0.5) 45%, rgba(255,255,255,0.15) 70%, transparent 100%)' }} />
 
-            {/* Content */}
-            <div className="relative z-10 max-w-[1200px] mx-auto px-6 lg:px-8 pt-28 pb-20 w-full">
-                <div className="max-w-2xl">
-                    {/* Badge */}
+                {/* Floating gold particles */}
+                {isMounted && (
+                    <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                        {[...Array(5)].map((_, i) => (
+                            <motion.div
+                                key={i}
+                                className="absolute w-1 h-1 rounded-full bg-[#D4871A]/30"
+                                style={{
+                                    left: `${20 + i * 15}%`,
+                                    top: `${55 + (i % 3) * 10}%`,
+                                }}
+                                animate={{
+                                    y: [0, -30, 0],
+                                    opacity: [0, 0.6, 0],
+                                }}
+                                transition={{
+                                    duration: 3.5 + i * 0.4,
+                                    repeat: Infinity,
+                                    delay: i * 0.7,
+                                    ease: "easeInOut",
+                                }}
+                            />
+                        ))}
+                    </div>
+                )}
+
+                {/* Scroll indicator */}
+                {isMounted && (
                     <motion.div
-                        initial={{ opacity: 0, y: 16 }}
+                        className="absolute bottom-10 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center"
+                        initial={{ opacity: 0, y: -8 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.6 }}
-                        className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/[0.12] border border-white/[0.15] backdrop-blur-sm mb-7"
+                        transition={{ delay: 1.2, duration: 0.6 }}
                     >
-                        <Sparkles className="w-3 h-3 text-amber-300" />
-                        <span className="text-[11px] font-medium text-white/95 tracking-wider uppercase">
-                            Giải đấu 6v6 #1 Việt Nam
-                        </span>
-                    </motion.div>
-
-                    {/* Title */}
-                    <motion.h1
-                        initial={{ opacity: 0, y: 24 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.8, delay: 0.15 }}
-                        className="text-[42px] sm:text-[56px] md:text-[64px] lg:text-[76px] font-extralight leading-[1.05] tracking-tight text-white mb-6"
-                    >
-                        Sân chơi
-                        <br />
-                        <span className="font-bold text-white">eFootball 6v6</span>
-                        <br />
-                        chuyên nghiệp<span className="text-amber-300 font-light">.</span>
-                    </motion.h1>
-
-                    {/* Subtitle */}
-                    <motion.p
-                        initial={{ opacity: 0, y: 16 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.8, delay: 0.3 }}
-                        className="text-[16px] sm:text-[18px] text-white/70 font-light leading-relaxed max-w-lg mb-10"
-                    >
-                        Tổ chức giải đấu 6v6 chỉ trong vài phút. Quản lý đội hình,
-                        theo dõi kết quả trực tiếp và kết nối cộng đồng game thủ.
-                    </motion.p>
-
-                    {/* CTA */}
-                    <motion.div
-                        initial={{ opacity: 0, y: 16 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.8, delay: 0.45 }}
-                        className="flex flex-col sm:flex-row items-start gap-3.5"
-                    >
-                        <Button
-                            size="lg"
-                            className="bg-white text-efb-red hover:bg-white/95 font-semibold text-sm h-12 px-7 rounded-xl shadow-lg shadow-black/10 transition-all duration-300 group"
-                            asChild
+                        <motion.div
+                            className="w-5 h-8 rounded-full border-2 border-white/25 flex items-start justify-center p-1"
                         >
-                            <Link href="/giai-dau">
-                                <Trophy className="w-4 h-4 mr-2" />
-                                Xem giải đấu
-                                <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-0.5 transition-transform" />
-                            </Link>
-                        </Button>
-                        <Button
-                            size="lg"
-                            className="bg-white/[0.1] border border-white/[0.2] text-white hover:bg-white/[0.18] font-medium text-sm h-12 px-7 rounded-xl backdrop-blur-sm transition-all duration-300"
-                            asChild
-                        >
-                            <Link href="/huong-dan">
-                                Tìm hiểu thêm
-                            </Link>
-                        </Button>
+                            <motion.div
+                                className="w-1 h-2 rounded-full bg-white/60"
+                                animate={{ y: [0, 8, 0] }}
+                                transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+                            />
+                        </motion.div>
                     </motion.div>
-                </div>
-            </div>
-
-            {/* Bottom curve to white */}
-            <div className="absolute bottom-0 left-0 right-0">
-                <svg viewBox="0 0 1440 80" fill="none" className="w-full block">
-                    <path d="M0 80H1440V20C1440 20 1200 80 720 80C240 80 0 20 0 20V80Z" fill="white" />
-                </svg>
+                )}
             </div>
         </section>
     );

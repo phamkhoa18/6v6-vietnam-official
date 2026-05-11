@@ -3,7 +3,7 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
     // Whitelist image quality values used by <Image> components
     images: {
-        qualities: [75, 85, 90],
+        qualities: [75, 85, 90, 95],
     },
 
     // Increase body size limit for file uploads (default is 4MB)

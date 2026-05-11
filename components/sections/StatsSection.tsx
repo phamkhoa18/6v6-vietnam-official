@@ -5,8 +5,8 @@ import { useRef } from "react";
 import { Trophy, Users, Gamepad2, Star } from "lucide-react";
 
 const stats = [
-    { icon: Trophy, value: "120+", label: "Giải đấu", desc: "đã tổ chức", gradient: "from-red-400 to-rose-500" },
-    { icon: Users, value: "5K+", label: "Game thủ", desc: "tham gia", gradient: "from-amber-400 to-orange-500" },
+    { icon: Trophy, value: "120+", label: "Giải đấu", desc: "đã tổ chức", gradient: "from-[#A01B1B] to-[#C42B2B]" },
+    { icon: Users, value: "5K+", label: "Cầu thủ", desc: "tham gia", gradient: "from-[#D4871A] to-[#E6A030]" },
     { icon: Gamepad2, value: "8K+", label: "Trận đấu", desc: "đã diễn ra", gradient: "from-emerald-400 to-teal-500" },
     { icon: Star, value: "4.8", label: "Đánh giá", desc: "trung bình", gradient: "from-violet-400 to-purple-500" },
 ];

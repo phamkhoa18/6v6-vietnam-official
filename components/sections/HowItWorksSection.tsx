@@ -10,7 +10,7 @@ const steps = [
         icon: ClipboardList,
         title: "Tạo giải đấu",
         description: "Đặt tên giải, chọn thể thức 6v6, thiết lập thể lệ và thời gian diễn ra.",
-        gradient: "from-red-400 to-rose-500",
+        gradient: "from-[#A01B1B] to-[#C42B2B]",
         bgLight: "bg-red-50",
     },
     {
@@ -18,7 +18,7 @@ const steps = [
         icon: Settings,
         title: "Cấu hình & mời",
         description: "Thiết lập nhánh đấu, chia bảng. Chia sẻ link mời đội bóng đăng ký.",
-        gradient: "from-amber-400 to-orange-500",
+        gradient: "from-[#D4871A] to-[#E6A030]",
         bgLight: "bg-amber-50",
     },
     {
@@ -46,8 +46,8 @@ export function HowItWorksSection() {
     return (
         <section ref={ref} className="py-20 lg:py-28 bg-white relative overflow-hidden">
             {/* Subtle decorations */}
-            <div className="absolute top-20 right-[5%] w-64 h-64 bg-red-50/60 rounded-full blur-[100px] pointer-events-none" />
-            <div className="absolute bottom-10 left-[5%] w-48 h-48 bg-amber-50/50 rounded-full blur-[100px] pointer-events-none" />
+            <div className="absolute top-20 right-[5%] w-64 h-64 bg-[#A01B1B]/[0.03] rounded-full blur-[100px] pointer-events-none" />
+            <div className="absolute bottom-10 left-[5%] w-48 h-48 bg-[#D4871A]/[0.04] rounded-full blur-[100px] pointer-events-none" />
 
             <div className="max-w-[1200px] mx-auto px-6 lg:px-8 relative z-10">
                 {/* Header */}
@@ -57,7 +57,7 @@ export function HowItWorksSection() {
                     transition={{ duration: 0.6 }}
                     className="text-center mb-16"
                 >
-                    <span className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-red-50 border border-red-100 text-efb-red text-xs font-semibold tracking-wider uppercase mb-5">
+                    <span className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#A01B1B]/[0.06] border border-[#A01B1B]/[0.1] text-efb-red text-xs font-semibold tracking-wider uppercase mb-5">
                         <Settings className="w-3 h-3" />
                         Cách thức
                     </span>

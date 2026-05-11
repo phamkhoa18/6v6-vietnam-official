@@ -7,8 +7,10 @@ import { motion } from "framer-motion";
 import {
     Menu, Trophy, Users, Newspaper, LogIn, LogOut, User, Settings,
     LayoutDashboard, Gamepad2, ChevronDown, Shield, Bell,
-    Calendar
+    Calendar,
+    Settings as SettingsIcon
 } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -32,16 +34,7 @@ export function Navbar() {
     const [scrolled, setScrolled] = useState(false);
     const [mobileOpen, setMobileOpen] = useState(false);
 
-    // Mock: not logged in by default. Set to true to preview logged-in state
-    const isAuthenticated = false;
-    const isManager = false;
-    const isLoading = false;
-    const user = isAuthenticated ? {
-        name: "Nguyễn Văn A",
-        email: "nguyenvana@gmail.com",
-        avatar: "",
-        role: "user" as const,
-    } : null;
+    const { user, isAuthenticated, isLoading, logout } = useAuth();
 
     useEffect(() => {
         const handleScroll = () => setScrolled(window.scrollY > 10);
@@ -64,12 +57,12 @@ export function Navbar() {
             animate={{ y: 0 }}
             transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
             className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${scrolled
-                ? "bg-white/95 backdrop-blur-md shadow-sm"
+                ? "bg-white/95 backdrop-blur-md shadow-sm border-b border-[#D4871A]/10"
                 : "bg-white"
                 }`}
         >
             <div className="max-w-[1200px] mx-auto px-6 lg:px-8">
-                <nav className="flex items-center justify-between h-16">
+                <nav className="flex items-center justify-between h-18">
                     {/* Logo */}
                     <Link href="/" className="flex items-center group">
                         <Image
@@ -77,7 +70,7 @@ export function Navbar() {
                             alt="6v6 Vietnam Official"
                             width={160}
                             height={45}
-                            className="h-10 w-auto object-contain"
+                            className="h-14 w-auto object-contain"
                             priority
                         />
                     </Link>
@@ -142,7 +135,7 @@ export function Navbar() {
                                                     <div className="flex items-center gap-1 mt-0.5">
                                                         <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-efb-red bg-red-50 px-1.5 py-0.5 rounded-full">
                                                             <Gamepad2 className="w-2.5 h-2.5" />
-                                                            Người chơi
+                                                            Cầu thủ
                                                         </span>
                                                     </div>
                                                 </div>
@@ -161,8 +154,24 @@ export function Navbar() {
                                                 <span className="text-sm">Giải đấu của tôi</span>
                                             </Link>
                                         </DropdownMenuItem>
+                                        {(user.role === "manager" || user.role === "admin") && (
+                                            <DropdownMenuItem asChild className="px-3 py-2.5 rounded-lg cursor-pointer">
+                                                <Link href="/manager" className="flex items-center gap-2.5">
+                                                    <LayoutDashboard className="w-4 h-4 text-gray-500" />
+                                                    <span className="text-sm">Manager Dashboard</span>
+                                                </Link>
+                                            </DropdownMenuItem>
+                                        )}
+                                        {user.role === "admin" && (
+                                            <DropdownMenuItem asChild className="px-3 py-2.5 rounded-lg cursor-pointer">
+                                                <Link href="/admin" className="flex items-center gap-2.5">
+                                                    <Shield className="w-4 h-4 text-gray-500" />
+                                                    <span className="text-sm">Admin Dashboard</span>
+                                                </Link>
+                                            </DropdownMenuItem>
+                                        )}
                                         <DropdownMenuSeparator className="my-1" />
-                                        <DropdownMenuItem className="px-3 py-2.5 rounded-lg cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50">
+                                        <DropdownMenuItem onClick={logout} className="px-3 py-2.5 rounded-lg cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50">
                                             <LogOut className="w-4 h-4 mr-2.5" />
                                             <span className="text-sm">Đăng xuất</span>
                                         </DropdownMenuItem>
@@ -257,6 +266,38 @@ export function Navbar() {
                                             </Link>
                                         </motion.div>
                                     ))}
+                                    {isAuthenticated && user && (user.role === "manager" || user.role === "admin") && (
+                                        <motion.div
+                                            initial={{ opacity: 0, x: 16 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            transition={{ delay: navLinks.length * 0.08 }}
+                                        >
+                                            <Link
+                                                href="/manager"
+                                                onClick={() => setMobileOpen(false)}
+                                                className="flex items-center gap-3.5 px-4 py-3.5 rounded-xl text-amber-600 hover:bg-amber-50 transition-colors duration-150"
+                                            >
+                                                <LayoutDashboard className="w-[18px] h-[18px]" />
+                                                <span className="text-[15px] font-medium">Manager Dashboard</span>
+                                            </Link>
+                                        </motion.div>
+                                    )}
+                                    {isAuthenticated && user && user.role === "admin" && (
+                                        <motion.div
+                                            initial={{ opacity: 0, x: 16 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            transition={{ delay: (navLinks.length + 1) * 0.08 }}
+                                        >
+                                            <Link
+                                                href="/admin"
+                                                onClick={() => setMobileOpen(false)}
+                                                className="flex items-center gap-3.5 px-4 py-3.5 rounded-xl text-amber-600 hover:bg-amber-50 transition-colors duration-150"
+                                            >
+                                                <Shield className="w-[18px] h-[18px]" />
+                                                <span className="text-[15px] font-medium">Admin Dashboard</span>
+                                            </Link>
+                                        </motion.div>
+                                    )}
                                 </div>
 
                                 {/* Mobile footer */}
@@ -264,6 +305,10 @@ export function Navbar() {
                                     {isAuthenticated && user ? (
                                         <Button
                                             variant="outline"
+                                            onClick={() => {
+                                                logout();
+                                                setMobileOpen(false);
+                                            }}
                                             className="w-full h-11 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 font-medium rounded-xl"
                                         >
                                             <LogOut className="w-4 h-4 mr-2" />

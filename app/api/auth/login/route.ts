@@ -1,0 +1,56 @@
+import { NextRequest, NextResponse } from "next/server";
+import bcrypt from "bcryptjs";
+import dbConnect from "@/lib/mongodb";
+import User from "@/models/User";
+import { generateToken, apiResponse, apiError } from "@/lib/auth";
+
+// POST /api/auth/login
+export async function POST(req: NextRequest) {
+    try {
+        await dbConnect();
+        const { email, password } = await req.json();
+
+        if (!email || !password) return apiError("Vui lòng nhập email và mật khẩu", 400);
+
+        const user = await User.findOne({ email: email.toLowerCase() }).select("+password");
+        if (!user) return apiError("Email hoặc mật khẩu không đúng", 401);
+        if (!user.isActive) return apiError("Tài khoản đã bị khóa", 403);
+
+        if (!user.isVerified) {
+            return NextResponse.json(
+                { success: false, message: "Tài khoản chưa được xác minh", data: { email: user.email, requiresVerification: true } },
+                { status: 403 }
+            );
+        }
+
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) return apiError("Email hoặc mật khẩu không đúng", 401);
+
+        user.lastLogin = new Date();
+        await user.save();
+
+        const token = generateToken(user);
+
+        const response = apiResponse({
+            user: {
+                _id: user._id, playerId: user.playerId, name: user.name, email: user.email, role: user.role,
+                avatar: user.avatar, phone: user.phone, bio: user.bio, jerseyNumber: user.jerseyNumber,
+                dateOfBirth: user.dateOfBirth, country: user.country, province: user.province,
+                nickname: user.nickname, teamName: user.teamName,
+                facebookName: user.facebookName, facebookLink: user.facebookLink,
+                stats: user.stats, isActive: user.isActive, lastLogin: user.lastLogin, createdAt: user.createdAt,
+            },
+            token,
+        }, 200, "Đăng nhập thành công");
+
+        response.cookies.set("token", token, {
+            httpOnly: true, secure: process.env.NODE_ENV === "production",
+            sameSite: "lax", maxAge: 7 * 24 * 60 * 60, path: "/",
+        });
+
+        return response;
+    } catch (error: any) {
+        console.error("Login error:", error);
+        return apiError("Có lỗi xảy ra, vui lòng thử lại", 500);
+    }
+}

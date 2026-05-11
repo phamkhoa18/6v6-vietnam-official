@@ -103,8 +103,8 @@ export function TournamentsShowcase() {
     return (
         <section ref={ref} className="py-20 lg:py-28 bg-gradient-to-b from-gray-50/80 via-white to-gray-50/80 relative overflow-hidden">
             {/* Decorations */}
-            <div className="absolute top-0 right-[10%] w-52 h-52 bg-red-100/40 rounded-full blur-3xl pointer-events-none" />
-            <div className="absolute bottom-10 left-[8%] w-48 h-48 bg-orange-100/30 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute top-0 right-[10%] w-52 h-52 bg-[#A01B1B]/[0.03] rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute bottom-10 left-[8%] w-48 h-48 bg-[#D4871A]/[0.04] rounded-full blur-3xl pointer-events-none" />
 
             <div className="max-w-[1200px] mx-auto px-6 lg:px-8 relative z-10">
                 {/* Header */}
@@ -114,7 +114,7 @@ export function TournamentsShowcase() {
                         animate={isInView ? { opacity: 1, y: 0 } : {}}
                         transition={{ duration: 0.6 }}
                     >
-                        <span className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-red-50 border border-red-100 text-efb-red text-xs font-semibold tracking-wider uppercase mb-5">
+                        <span className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#A01B1B]/[0.06] border border-[#A01B1B]/[0.1] text-efb-red text-xs font-semibold tracking-wider uppercase mb-5">
                             <Sparkles className="w-3 h-3" />
                             Nổi bật
                         </span>
@@ -160,7 +160,7 @@ export function TournamentsShowcase() {
                                 <Link href={`/giai-dau/${t._id}`} className="block group">
                                     <div className="bg-white rounded-2xl overflow-hidden border border-gray-100 hover:border-gray-200 hover:shadow-2xl hover:shadow-gray-200/50 transition-all duration-400">
                                         {/* Image placeholder */}
-                                        <div className="relative h-48 overflow-hidden bg-gradient-to-br from-[#DC2626] via-[#E53E3E] to-[#C53030]">
+                                        <div className="relative h-48 overflow-hidden bg-gradient-to-br from-[#A01B1B] via-[#8B1818] to-[#5C1010]">
                                             <div className="absolute inset-0 flex items-center justify-center">
                                                 <Trophy className="w-16 h-16 text-white/10" />
                                             </div>
@@ -189,7 +189,7 @@ export function TournamentsShowcase() {
 
                                             <div className="space-y-2.5">
                                                 {[
-                                                    { icon: Gamepad2, label: "Thể thức", value: `6vs6 - ${formatLabels[t.format] || t.format}` },
+                                                    { icon: Gamepad2, label: "Thể thức", value: `Sân 6 - ${formatLabels[t.format] || t.format}` },
                                                     { icon: Calendar, label: "Thời gian", value: `${formatDate(t.schedule.tournamentStart)} - ${formatDate(t.schedule.tournamentEnd)}` },
                                                     { icon: MapPin, label: "Hình thức", value: t.isOnline ? "Online" : (t.location || "Offline") },
                                                 ].map((item) => (

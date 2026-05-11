@@ -3,7 +3,7 @@ import Counter from "./Counter";
 
 export interface IUser extends Document {
     _id: mongoose.Types.ObjectId;
-    efvId: number; // Auto-incrementing unique permanent ID (1, 2, 3, ...)
+    playerId: number; // Auto-incrementing unique permanent ID (1, 2, 3, ...)
     name: string;
     email: string;
     password: string;
@@ -11,7 +11,7 @@ export interface IUser extends Document {
     avatar?: string;
     phone?: string;
     bio?: string;
-    gamerId?: string; // eFootball ID
+    jerseyNumber?: number; // Số áo
     dateOfBirth?: string;
     country?: string;
     province?: string;
@@ -41,7 +41,7 @@ export interface IUser extends Document {
 
 const UserSchema = new Schema<IUser>(
     {
-        efvId: {
+        playerId: {
             type: Number,
             unique: true,
             sparse: true,
@@ -84,9 +84,8 @@ const UserSchema = new Schema<IUser>(
             default: "",
             maxlength: [500, "Bio không được quá 500 ký tự"],
         },
-        gamerId: {
-            type: String,
-            default: "",
+        jerseyNumber: {
+            type: Number,
         },
         dateOfBirth: {
             type: String,
@@ -161,17 +160,16 @@ const UserSchema = new Schema<IUser>(
 
 // Indexes
 UserSchema.index({ role: 1 });
-UserSchema.index({ gamerId: 1 });
-UserSchema.index({ efvId: 1 });
+UserSchema.index({ playerId: 1 });
 
-// Pre-save hook: auto-generate EFV-ID for new users
+// Pre-save hook: auto-generate Player ID for new users
 UserSchema.pre("save", async function () {
-    if (this.isNew && !this.efvId) {
+    if (this.isNew && !this.playerId) {
         try {
-            const seq = await Counter.getNextSequence("efvId");
-            this.efvId = seq;
+            const seq = await Counter.getNextSequence("playerId");
+            this.playerId = seq;
         } catch (err) {
-            console.error("Failed to generate EFV-ID:", err);
+            console.error("Failed to generate Player ID:", err);
         }
     }
 });

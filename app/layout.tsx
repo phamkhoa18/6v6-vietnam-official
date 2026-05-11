@@ -3,6 +3,7 @@ import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { Toaster } from "sonner";
 import { ConfirmDialogProvider } from "@/components/ui/confirm-dialog";
+import { getSiteSettings } from "@/lib/site-settings";
 import Script from "next/script";
 
 export const viewport: Viewport = {
@@ -12,81 +13,95 @@ export const viewport: Viewport = {
     maximumScale: 5,
 };
 
-const siteName = "6v6 Vietnam Official";
-const siteDescription = "Giải đấu bóng đá eFootball 6v6 chuyên nghiệp tại Việt Nam";
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://6v6vietnam.vn";
+export async function generateMetadata(): Promise<Metadata> {
+    const s = await getSiteSettings();
+    const siteUrl = s.siteUrl || "https://6v6.vn";
 
-export const metadata: Metadata = {
-    metadataBase: new URL(siteUrl),
-    title: {
-        default: `${siteName} - Giải Đấu eFootball 6v6 Chuyên Nghiệp`,
-        template: `%s | ${siteName}`,
-    },
-    description: siteDescription,
-    keywords: ["6v6", "efootball", "giải đấu", "bóng đá", "esports", "vietnam"],
-    authors: [{ name: siteName }],
-    creator: siteName,
-    publisher: siteName,
-    alternates: {
-        canonical: siteUrl,
-    },
-    icons: {
-        icon: "/favicon.ico",
-    },
-    openGraph: {
-        title: siteName,
-        description: siteDescription,
-        url: siteUrl,
-        siteName: siteName,
-        locale: "vi_VN",
-        type: "website",
-    },
-    twitter: {
-        card: "summary_large_image",
-        title: siteName,
-        description: siteDescription,
-    },
-    robots: {
-        index: true,
-        follow: true,
-        googleBot: {
+    return {
+        metadataBase: new URL(siteUrl),
+        title: {
+            default: s.seoTitle || `${s.siteName} - Giải Đấu Bóng Đá Sân 6 Chuyên Nghiệp`,
+            template: `%s | ${s.siteName}`,
+        },
+        description: s.seoDescription || s.siteDescription,
+        keywords: s.seoKeywords,
+        authors: [{ name: s.siteName }],
+        creator: s.siteName,
+        publisher: s.siteName,
+        alternates: {
+            canonical: siteUrl,
+        },
+        icons: {
+            icon: s.favicon || "/favicon.ico",
+            apple: s.appleTouchIcon || undefined,
+        },
+        openGraph: {
+            title: s.seoTitle || s.siteName,
+            description: s.seoDescription || s.siteDescription,
+            url: siteUrl,
+            siteName: s.siteName,
+            images: [
+                {
+                    url: s.ogImage || "/images/banner/bg-nen.png",
+                    width: 1200,
+                    height: 630,
+                    alt: `${s.siteName} Showcase`,
+                },
+            ],
+            locale: "vi_VN",
+            type: "website",
+        },
+        twitter: {
+            card: "summary_large_image",
+            title: s.siteName,
+            description: s.seoDescription || s.siteDescription,
+            images: [s.ogImage || "/images/banner/bg-nen.png"],
+        },
+        robots: {
             index: true,
             follow: true,
-            "max-video-preview": -1,
-            "max-image-preview": "large",
-            "max-snippet": -1,
+            googleBot: {
+                index: true,
+                follow: true,
+                "max-video-preview": -1,
+                "max-image-preview": "large",
+                "max-snippet": -1,
+            },
         },
-    },
-};
+    };
+}
 
-export default function RootLayout({
+export default async function RootLayout({
     children,
 }: Readonly<{
     children: React.ReactNode;
 }>) {
-    const googleAnalyticsId = process.env.NEXT_PUBLIC_GA_ID;
-    const facebookPixelId = process.env.NEXT_PUBLIC_FB_PIXEL_ID;
+    const s = await getSiteSettings();
 
     return (
         <html lang="vi">
             <head>
                 {/* Google Analytics */}
-                {googleAnalyticsId && (
+                {s.googleAnalyticsId && (
                     <>
                         <Script
-                            src={`https://www.googletagmanager.com/gtag/js?id=${googleAnalyticsId}`}
+                            src={`https://www.googletagmanager.com/gtag/js?id=${s.googleAnalyticsId}`}
                             strategy="afterInteractive"
                         />
                         <Script id="gtag-init" strategy="afterInteractive">
-                            {`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${googleAnalyticsId}');`}
+                            {`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${s.googleAnalyticsId}');`}
                         </Script>
                     </>
                 )}
                 {/* Facebook Pixel */}
-                {facebookPixelId && (
+                {s.facebookPixelId && (
                     <Script id="fb-pixel" strategy="afterInteractive">
-                        {`!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','${facebookPixelId}');fbq('track','PageView');`}
+                        {`!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','${s.facebookPixelId}');fbq('track','PageView');`}
                     </Script>
+                )}
+                {/* Custom Head Code */}
+                {s.customHeadCode && (
+                    <div dangerouslySetInnerHTML={{ __html: s.customHeadCode }} />
                 )}
             </head>
             <body className="antialiased">
@@ -96,6 +111,10 @@ export default function RootLayout({
                     </ConfirmDialogProvider>
                     <Toaster position="top-right" richColors />
                 </AuthProvider>
+                {/* Custom Footer Code */}
+                {s.customFooterCode && (
+                    <div dangerouslySetInnerHTML={{ __html: s.customFooterCode }} />
+                )}
             </body>
         </html>
     );

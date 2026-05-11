@@ -5,14 +5,14 @@ import { useRouter } from "next/navigation";
 
 interface User {
     _id: string;
-    efvId?: number;
+    playerId?: number;
     name: string;
     email: string;
     role: "admin" | "manager" | "user";
     avatar?: string;
     phone?: string;
     bio?: string;
-    gamerId?: string;
+    jerseyNumber?: number;
     dateOfBirth?: string;
     country?: string;
     province?: string;
