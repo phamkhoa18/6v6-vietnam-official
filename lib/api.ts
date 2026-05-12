@@ -58,6 +58,10 @@ export const adminAPI = {
     updateCategory: (categoryId: string, data: any) => fetchAPI("/admin/categories", { method: "PUT", body: JSON.stringify({ categoryId, ...data }) }),
     deleteCategory: (categoryId: string) => fetchAPI("/admin/categories", { method: "DELETE", body: JSON.stringify({ categoryId }) }),
 
+    // Menus
+    getMenus: () => fetchAPI("/admin/menus"),
+    updateMenu: (location: string, items: any[]) => fetchAPI("/admin/menus", { method: "PUT", body: JSON.stringify({ location, items }) }),
+
     // Settings
     getSettings: () => fetchAPI("/admin/settings"),
     updateSettings: (data: any) => fetchAPI("/admin/settings", { method: "PUT", body: JSON.stringify(data) }),
@@ -79,7 +83,52 @@ export const adminAPI = {
     },
 };
 
+// ====== General Upload (for user-facing uploads: avatar, screenshot, payment_proof, etc.) ======
+export const uploadImage = async (file: File, type: string = "general") => {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("type", type);
+    const headers: Record<string, string> = {};
+    if (typeof window !== "undefined") {
+        const savedToken = localStorage.getItem("6v6_token");
+        if (savedToken) headers.Authorization = `Bearer ${savedToken}`;
+    }
+    const res = await fetch("/api/upload", {
+        method: "POST",
+        headers,
+        body: formData,
+    });
+    return res.json();
+};
+
 export const tournamentAPI = {
     create: (data: any) => fetchAPI("/tournaments", { method: "POST", body: JSON.stringify(data) }),
     // To be expanded
+};
+
+// ====== Payment Config ======
+export const paymentConfigAPI = {
+    getConfig: () => fetchAPI("/admin/payment-config"),
+    updateConfig: (data: any) =>
+        fetchAPI("/admin/payment-config", {
+            method: "PUT",
+            body: JSON.stringify(data),
+        }),
+    getPublicConfig: () => fetchAPI("/payment-config"),
+    uploadQR: async (file: File) => {
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("type", "payment_qr");
+        const headers: Record<string, string> = {};
+        if (typeof window !== "undefined") {
+            const savedToken = localStorage.getItem("6v6_token");
+            if (savedToken) headers.Authorization = `Bearer ${savedToken}`;
+        }
+        const res = await fetch("/api/admin/settings/upload", {
+            method: "POST",
+            headers,
+            body: formData,
+        });
+        return res.json();
+    },
 };

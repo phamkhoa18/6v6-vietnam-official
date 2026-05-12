@@ -3,13 +3,13 @@
 import { useState, useEffect, use } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
-    ArrowLeft, Clock, Eye, Calendar, Tag, Share2,
-    Newspaper, Pin, Star, ChevronRight, Loader2, Copy, Check,
-    TrendingUp, Flame, ArrowUp, ArrowRight
+    Clock, Eye, Tag, Share2, Link2, MessageCircle,
+    Newspaper, ChevronRight, Loader2, Check,
+    TrendingUp, ArrowUp, ArrowRight, X, Flame
 } from "lucide-react";
-import { format, formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow } from "date-fns";
 import { vi } from "date-fns/locale";
 
 export default function PostDetailPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -21,6 +21,7 @@ export default function PostDetailPage({ params }: { params: Promise<{ slug: str
     const [copied, setCopied] = useState(false);
     const [showScrollTop, setShowScrollTop] = useState(false);
     const [readProgress, setReadProgress] = useState(0);
+    const [shareModalOpen, setShareModalOpen] = useState(false);
 
     useEffect(() => { loadPost(); }, [slug]);
     useEffect(() => {
@@ -53,11 +54,23 @@ export default function PostDetailPage({ params }: { params: Promise<{ slug: str
         setTimeout(() => setCopied(false), 2000);
     };
 
+    const handleSharePlatform = (platform: string) => {
+        const url = encodeURIComponent(window.location.href);
+        const title = encodeURIComponent(post.title);
+        let shareUrl = "";
+        
+        switch (platform) {
+            case "facebook": shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${url}`; break;
+            case "twitter": shareUrl = `https://twitter.com/intent/tweet?url=${url}&text=${title}`; break;
+            case "zalo": shareUrl = `https://zalo.me/share?url=${url}`; break;
+            case "linkedin": shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${url}`; break;
+        }
+        
+        if (shareUrl) window.open(shareUrl, "_blank", "width=600,height=500");
+    };
+
     const timeAgo = (date: string) => {
         try { return formatDistanceToNow(new Date(date), { addSuffix: true, locale: vi }); } catch { return ""; }
-    };
-    const formatDate = (date: string) => {
-        try { return format(new Date(date), "dd MMMM, yyyy", { locale: vi }); } catch { return ""; }
     };
 
     if (isLoading) {
@@ -73,223 +86,315 @@ export default function PostDetailPage({ params }: { params: Promise<{ slug: str
 
     if (!post) return null;
 
+    // Split related posts: First 5 for Sidebar (Trending), Next 3 for Bottom (Related)
+    // If not enough posts, we just reuse them to show the UI
+    const trendingPosts = related.slice(0, 5);
+    const bottomRelatedPosts = related.length > 5 ? related.slice(5, 8) : related.slice(0, 3);
+
     return (
-        <div className="min-h-screen bg-[#f8f9fa] pt-16">
-            {/* Reading Progress */}
-            <div className="fixed top-0 left-0 right-0 h-0.5 bg-gray-100 z-50">
-                <div className="h-full bg-gradient-to-r from-efb-red to-efb-red-light transition-all duration-150 ease-out" style={{ width: `${readProgress}%` }} />
+        <div className="min-h-screen bg-white pt-[72px] font-sans pb-16">
+            {/* Reading Progress Bar (Fixed below Navbar) */}
+            <div className="fixed top-[72px] left-0 right-0 h-[3px] bg-transparent z-50">
+                <div className="h-full bg-gradient-to-r from-efb-red to-efb-red-dark transition-all duration-150 ease-out" style={{ width: `${readProgress}%` }} />
             </div>
 
-            {/* Breadcrumb */}
-            <div className="bg-white border-b border-gray-100">
-                <div className="max-w-[1200px] mx-auto px-4 lg:px-6">
-                    <div className="flex items-center gap-2 h-10 text-[11px]">
-                        <Link href="/" className="text-gray-400 hover:text-efb-red transition-colors">Trang chủ</Link>
-                        <ChevronRight className="w-2.5 h-2.5 text-gray-300" />
-                        <Link href="/tin-tuc" className="text-gray-400 hover:text-efb-red transition-colors">Tin tức</Link>
-                    </div>
+            <div className="max-w-[1200px] mx-auto px-4 lg:px-6 pt-4">
+                
+                {/* Breadcrumb (Bongdaplus Style: Inline, simple `»`) */}
+                <div className="flex items-center flex-wrap gap-2 text-[12px] font-medium text-gray-500 mb-5 uppercase">
+                    <Link href="/" className="hover:text-efb-red transition-colors">Trang chủ</Link>
+                    <span className="text-gray-300">»</span>
+                    <Link href="/tin-tuc" className="hover:text-efb-red transition-colors">Tin tức</Link>
+                    {post.categoryRef && (
+                        <>
+                            <span className="text-gray-300">»</span>
+                            <Link href={`/tin-tuc?category=${post.categoryRef.slug || post.category}`} className="hover:text-efb-red transition-colors text-efb-red">
+                                {post.categoryRef.name}
+                            </Link>
+                        </>
+                    )}
                 </div>
-            </div>
 
-            <div className="max-w-[1200px] mx-auto px-4 lg:px-6 py-6">
-                <div className="grid lg:grid-cols-3 gap-6">
-                    {/* Main Article */}
-                    <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="lg:col-span-2">
-                        <article className="bg-white rounded-xl border border-gray-100 overflow-hidden">
-                            {/* Cover */}
-                            {post.coverImage && (
-                                <div className="relative aspect-[16/8] overflow-hidden">
-                                    <img src={post.coverImage} alt={post.title} className="w-full h-full object-cover" />
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
-                                </div>
-                            )}
+                <div className="grid lg:grid-cols-12 gap-8">
+                    {/* ===== LEFT COLUMN: Main Article ===== */}
+                    <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="lg:col-span-8">
+                        <article>
+                            {/* Article Header */}
+                            <header className="mb-6">
+                                <h1 className="text-3xl lg:text-[34px] font-semibold text-gray-900 leading-[1.3] mb-4">
+                                    {post.title}
+                                </h1>
 
-                            {/* Header */}
-                            <div className="p-5 lg:p-7 pb-0">
-                                <div className="flex items-center gap-2 mb-3 flex-wrap">
-                                    {post.isPinned && (
-                                        <span className="inline-flex items-center gap-1 px-2 py-1 bg-efb-red text-white text-[10px] font-medium rounded uppercase tracking-wider">
-                                            <Flame className="w-2.5 h-2.5" /> NÓNG
-                                        </span>
-                                    )}
-                                    {post.isFeatured && (
-                                        <span className="inline-flex items-center gap-1 px-2 py-1 bg-efb-gold text-gray-900 text-[10px] font-medium rounded uppercase tracking-wider">
-                                            <Star className="w-2.5 h-2.5 fill-current" /> NỔI BẬT
-                                        </span>
-                                    )}
-                                </div>
-
-                                <h1 className="text-2xl lg:text-[28px] font-semibold text-gray-900 leading-tight mb-3">{post.title}</h1>
-
-                                {post.excerpt && (
-                                    <p className="text-[15px] text-gray-500 leading-relaxed mb-4 border-l-2 border-efb-red/30 pl-4 italic">{post.excerpt}</p>
-                                )}
-
-                                {/* Author */}
-                                <div className="flex items-center justify-between pb-5 border-b border-gray-100 flex-wrap gap-3">
-                                    <div className="flex items-center gap-3">
-                                        {post.author?.avatar ? (
-                                            <img src={post.author.avatar} alt={post.author.name} className="w-9 h-9 rounded-full border-2 border-gray-100 object-cover" />
-                                        ) : (
-                                            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-efb-red to-efb-red-dark flex items-center justify-center text-white font-medium text-sm">
-                                                {(post.author?.name || "A").charAt(0).toUpperCase()}
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-3 border-y border-gray-100">
+                                    {/* Author & Time */}
+                                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+                                        <div className="flex items-center gap-2">
+                                            {post.author?.avatar ? (
+                                                <img src={post.author.avatar} alt={post.author.name} className="w-8 h-8 rounded-full border border-gray-100 object-cover" />
+                                            ) : (
+                                                <div className="w-8 h-8 rounded-full bg-efb-red flex items-center justify-center text-white font-semibold text-xs flex-shrink-0">
+                                                    {(post.author?.name || "A").charAt(0).toUpperCase()}
+                                                </div>
+                                            )}
+                                            <span className="text-[13px] font-semibold text-gray-800 line-clamp-1">{post.author?.name || "Admin"}</span>
+                                        </div>
+                                        <div className="flex items-center gap-2.5 sm:gap-3 flex-wrap">
+                                            <span className="hidden sm:block w-1 h-1 rounded-full bg-gray-300 flex-shrink-0" />
+                                            <div className="flex items-center gap-1.5 text-[12px] font-medium text-gray-500 whitespace-nowrap">
+                                                <Clock className="w-3.5 h-3.5" />
+                                                {timeAgo(post.publishedAt || post.createdAt)}
                                             </div>
-                                        )}
-                                        <div>
-                                            <p className="text-sm font-medium text-gray-900">{post.author?.name || "Admin"}</p>
-                                            <p className="text-[11px] text-gray-400 flex items-center gap-2">
-                                                <span className="flex items-center gap-1"><Calendar className="w-2.5 h-2.5" /> {formatDate(post.publishedAt || post.createdAt)}</span>
-                                                <span>·</span>
-                                                <span>{timeAgo(post.publishedAt || post.createdAt)}</span>
-                                            </p>
+                                            {post.views > 0 && (
+                                                <>
+                                                    <span className="w-1 h-1 rounded-full bg-gray-300 flex-shrink-0" />
+                                                    <div className="flex items-center gap-1.5 text-[12px] font-medium text-gray-500 whitespace-nowrap">
+                                                        <Eye className="w-3.5 h-3.5" /> {post.views} lượt xem
+                                                    </div>
+                                                </>
+                                            )}
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-3 text-[11px] text-gray-400">
-                                        <span className="flex items-center gap-1"><Eye className="w-3 h-3" /> {post.views || 0}</span>
-                                        {post.readingTime > 0 && <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {post.readingTime} phút</span>}
-                                        <button onClick={copyLink} className="w-7 h-7 rounded-lg bg-gray-50 hover:bg-gray-100 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-all">
-                                            {copied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+
+                                    {/* Horizontal Share Buttons (Mobile/Tablet fallback, also visible on desktop) */}
+                                    <div className="flex items-center gap-2">
+                                        <button onClick={() => setShareModalOpen(true)} className="w-8 h-8 rounded-full bg-red-50 text-efb-red hover:bg-efb-red hover:text-white flex items-center justify-center transition-all">
+                                            <Share2 className="w-4 h-4" />
+                                        </button>
+                                        <button onClick={copyLink} className="w-8 h-8 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-900 flex items-center justify-center transition-all">
+                                            {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Link2 className="w-4 h-4" />}
                                         </button>
                                     </div>
                                 </div>
-                            </div>
+                            </header>
 
-                            {/* Content */}
-                            <div className="px-5 lg:px-7 py-6">
-                                <div
-                                    className="prose prose-sm lg:prose-base max-w-none prose-headings:text-gray-900 prose-headings:font-semibold prose-h2:text-xl prose-h2:mt-8 prose-h2:mb-4 prose-h2:border-l-2 prose-h2:border-efb-red/40 prose-h2:pl-3 prose-p:text-gray-600 prose-p:leading-[1.8] prose-a:text-efb-red prose-a:font-medium prose-a:no-underline hover:prose-a:underline prose-img:rounded-xl prose-img:mx-auto prose-blockquote:border-l-efb-red prose-strong:text-gray-800 prose-li:text-gray-600"
-                                    dangerouslySetInnerHTML={{ __html: post.content }}
-                                />
-                            </div>
-
-                            {/* Tags */}
-                            {post.tags?.length > 0 && (
-                                <div className="px-5 lg:px-7 pb-5">
-                                    <div className="flex items-center gap-2 flex-wrap pt-4 border-t border-gray-100">
-                                        <Tag className="w-3.5 h-3.5 text-gray-400" />
-                                        {post.tags.map((tag: string, i: number) => (
-                                            <span key={i} className="text-[11px] font-medium text-gray-500 bg-gray-50 px-2.5 py-1 rounded-md hover:bg-efb-red/5 hover:text-efb-red transition-colors cursor-default">#{tag}</span>
-                                        ))}
-                                    </div>
-                                </div>
+                            {/* Sapo (Excerpt) */}
+                            {post.excerpt && (
+                                <p className="text-[16px] lg:text-[18px] font-medium text-gray-700 leading-relaxed mb-6">
+                                    {post.excerpt}
+                                </p>
                             )}
 
-                            {/* Share */}
-                            <div className="px-5 lg:px-7 py-4 bg-gray-50/50 border-t border-gray-100 flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                    <Share2 className="w-3.5 h-3.5 text-gray-400" />
-                                    <button onClick={copyLink} className="px-3 py-1.5 bg-white border border-gray-200 rounded-md text-[10px] font-medium text-gray-500 hover:text-efb-red hover:border-efb-red/30 transition-all flex items-center gap-1">
-                                        {copied ? <><Check className="w-3 h-3 text-emerald-500" /> Đã copy</> : <><Copy className="w-3 h-3" /> Copy link</>}
-                                    </button>
-                                </div>
-                                <span className="text-[11px] text-gray-400 flex items-center gap-1"><Eye className="w-3 h-3" /> {post.views || 0} lượt xem</span>
-                            </div>
-                        </article>
-
-                        {/* Related */}
-                        {related.length > 0 && (
-                            <div className="mt-6">
-                                <div className="flex items-center justify-between mb-4">
-                                    <div className="flex items-center gap-2.5">
-                                        <div className="w-1 h-5 rounded-full bg-efb-red" />
-                                        <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wider">Bài viết liên quan</h2>
+                            {/* Main Layout Grid inside Article for Vertical Share Bar */}
+                            <div className="relative flex gap-6">
+                                {/* Vertical Share Bar (Sticky on Desktop) */}
+                                <div className="hidden md:block w-[40px] flex-shrink-0">
+                                    <div className="sticky top-[100px] flex flex-col gap-3">
+                                        <div className="text-[10px] font-semibold text-gray-400 uppercase text-center mb-1">Share</div>
+                                        <button onClick={() => setShareModalOpen(true)} className="w-10 h-10 rounded-full bg-red-50 text-efb-red hover:bg-efb-red hover:text-white flex items-center justify-center transition-all shadow-sm">
+                                            <Share2 className="w-4 h-4" />
+                                        </button>
+                                        <button onClick={copyLink} className="w-10 h-10 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-900 flex items-center justify-center transition-all group relative">
+                                            {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Link2 className="w-4 h-4" />}
+                                            <span className="absolute left-full ml-2 px-2 py-1 bg-gray-800 text-white text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">Copy Link</span>
+                                        </button>
                                     </div>
-                                    <Link href="/tin-tuc" className="text-[11px] text-efb-red font-medium flex items-center gap-1 hover:underline">
-                                        Xem tất cả <ArrowRight className="w-3 h-3" />
-                                    </Link>
                                 </div>
-                                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                                    {related.slice(0, 6).map((rp: any) => (
-                                        <Link key={rp._id} href={`/tin-tuc/${rp.slug}`} className="group block bg-white rounded-xl border border-gray-100 overflow-hidden hover:shadow-lg transition-all">
-                                            <div className="relative aspect-[16/10] overflow-hidden">
-                                                {rp.coverImage ? (
-                                                    <img src={rp.coverImage} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                                                ) : (
-                                                    <div className="w-full h-full bg-gray-100 flex items-center justify-center"><Newspaper className="w-8 h-8 text-gray-250" /></div>
-                                                )}
-                                            </div>
-                                            <div className="p-3.5">
-                                                <h4 className="text-[13px] font-medium text-gray-900 line-clamp-2 leading-snug group-hover:text-efb-red transition-colors mb-2">{rp.title}</h4>
-                                                <div className="flex items-center gap-2 text-[10px] text-gray-400">
-                                                    <span className="flex items-center gap-1"><Clock className="w-2.5 h-2.5" />{timeAgo(rp.publishedAt || rp.createdAt)}</span>
-                                                    <span>·</span>
-                                                    <span className="flex items-center gap-0.5"><Eye className="w-2.5 h-2.5" />{rp.views || 0}</span>
-                                                </div>
-                                            </div>
-                                        </Link>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-                    </motion.div>
 
-                    {/* Sidebar */}
-                    <div className="space-y-5">
-                        <div className="bg-white rounded-xl border border-gray-100 overflow-hidden sticky top-20">
-                            <div className="p-4 border-b border-gray-50">
-                                <div className="flex items-center gap-2.5 mb-3">
-                                    {post.author?.avatar ? (
-                                        <img src={post.author.avatar} alt="" className="w-10 h-10 rounded-full border-2 border-gray-100 object-cover" />
-                                    ) : (
-                                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-efb-red to-efb-red-dark flex items-center justify-center text-white font-medium text-sm">
-                                            {(post.author?.name || "A").charAt(0).toUpperCase()}
+                                {/* Content Area */}
+                                <div className="flex-1 min-w-0">
+                                    {/* Cover Image */}
+                                    {post.coverImage && (
+                                        <figure className="mb-8">
+                                            <div className="relative aspect-[16/9] overflow-hidden rounded-xl">
+                                                <img src={post.coverImage} alt={post.title} className="w-full h-full object-cover" />
+                                            </div>
+                                            <figcaption className="mt-2 text-[13px] text-gray-500 text-center italic">
+                                                Ảnh minh họa: 6v6 Vietnam Official
+                                            </figcaption>
+                                        </figure>
+                                    )}
+
+                                    {/* HTML Content */}
+                                    <div
+                                        className="prose prose-lg max-w-none prose-headings:text-gray-900 prose-headings:font-semibold prose-h2:text-2xl prose-h2:mt-10 prose-h2:mb-4 prose-h2:pb-2 prose-h2:border-b prose-h2:border-gray-100 prose-p:text-gray-800 prose-p:leading-[1.8] prose-p:text-[17px] prose-a:text-efb-red prose-a:font-medium hover:prose-a:underline prose-img:rounded-xl prose-img:mx-auto prose-blockquote:border-l-4 prose-blockquote:border-efb-red prose-blockquote:bg-gray-50 prose-blockquote:px-5 prose-blockquote:py-3 prose-blockquote:not-italic prose-blockquote:rounded-r-xl prose-strong:text-gray-900 prose-li:text-gray-800"
+                                        dangerouslySetInnerHTML={{ __html: post.content }}
+                                    />
+                                    
+                                    {/* Tags */}
+                                    {post.tags?.length > 0 && (
+                                        <div className="flex items-center gap-2 flex-wrap pt-8 mt-8 border-t border-gray-100">
+                                            <Tag className="w-4 h-4 text-gray-400" />
+                                            <span className="text-[13px] font-semibold text-gray-900 uppercase mr-1">Chủ đề:</span>
+                                            {post.tags.map((tag: string, i: number) => (
+                                                <span key={i} className="text-[12px] font-medium text-gray-600 bg-gray-100 px-3 py-1.5 rounded-md hover:bg-efb-red hover:text-white transition-colors cursor-pointer">
+                                                    {tag}
+                                                </span>
+                                            ))}
                                         </div>
                                     )}
-                                    <div>
-                                        <p className="text-sm font-medium text-gray-900">{post.author?.name || "Admin"}</p>
-                                        <p className="text-[10px] text-gray-400">Tác giả</p>
-                                    </div>
-                                </div>
-                                <div className="grid grid-cols-2 gap-2 text-center">
-                                    <div className="bg-gray-50 rounded-lg py-2">
-                                        <p className="text-sm font-semibold text-gray-900">{post.views || 0}</p>
-                                        <p className="text-[9px] text-gray-400 uppercase font-medium">Lượt xem</p>
-                                    </div>
-                                    <div className="bg-gray-50 rounded-lg py-2">
-                                        <p className="text-sm font-semibold text-gray-900">{post.readingTime || 1}</p>
-                                        <p className="text-[9px] text-gray-400 uppercase font-medium">Phút đọc</p>
-                                    </div>
                                 </div>
                             </div>
-
-                            <div className="p-3">
-                                <button onClick={copyLink} className="w-full py-2.5 bg-efb-red/5 text-efb-red text-xs font-medium rounded-lg hover:bg-efb-red/10 transition-colors flex items-center justify-center gap-1.5">
-                                    {copied ? <><Check className="w-3.5 h-3.5" /> Đã copy!</> : <><Share2 className="w-3.5 h-3.5" /> Chia sẻ</>}
-                                </button>
-                            </div>
-
-                            {/* Sidebar related */}
-                            {related.length > 0 && (
-                                <div className="border-t border-gray-50">
-                                    <div className="px-4 py-2.5 flex items-center gap-1.5">
-                                        <TrendingUp className="w-3.5 h-3.5 text-efb-red" />
-                                        <span className="text-[10px] font-semibold text-gray-900 uppercase tracking-wider">Tin liên quan</span>
+                            
+                            {/* ===== BOTTOM SECTION: RELATED POSTS ===== */}
+                            {bottomRelatedPosts.length > 0 && (
+                                <div className="mt-12 pt-8 border-t border-gray-100">
+                                    <div className="flex items-center gap-2 mb-6">
+                                        <div className="w-1.5 h-6 bg-efb-red rounded-sm" />
+                                        <h3 className="text-[18px] font-semibold text-gray-900 uppercase">Bài viết liên quan</h3>
                                     </div>
-                                    <div className="divide-y divide-gray-50">
-                                        {related.slice(0, 5).map((rp: any) => (
-                                            <Link key={rp._id} href={`/tin-tuc/${rp.slug}`} className="group flex items-start gap-3 px-4 py-2.5 hover:bg-gray-50/50 transition-colors">
-                                                {rp.coverImage ? (
-                                                    <img src={rp.coverImage} alt="" className="w-14 h-10 rounded object-cover flex-shrink-0" />
-                                                ) : (
-                                                    <div className="w-14 h-10 rounded bg-gray-100 flex items-center justify-center flex-shrink-0"><Newspaper className="w-3.5 h-3.5 text-gray-300" /></div>
-                                                )}
-                                                <div className="flex-1 min-w-0">
-                                                    <h4 className="text-[11px] font-medium text-gray-700 line-clamp-2 leading-snug group-hover:text-efb-red transition-colors">{rp.title}</h4>
-                                                    <span className="text-[9px] text-gray-400">{timeAgo(rp.publishedAt || rp.createdAt)}</span>
+                                    <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-6">
+                                        {bottomRelatedPosts.map((rp: any) => (
+                                            <Link key={`bottom-${rp._id}`} href={`/tin-tuc/${rp.slug}`} className="group block">
+                                                <div className="relative aspect-[16/10] rounded-xl overflow-hidden mb-3">
+                                                    {rp.coverImage ? (
+                                                        <img src={rp.coverImage} alt={rp.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                                                    ) : (
+                                                        <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+                                                            <Newspaper className="w-8 h-8 text-gray-300" />
+                                                        </div>
+                                                    )}
+                                                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />
+                                                </div>
+                                                <h4 className="text-[15px] font-semibold text-gray-900 leading-snug line-clamp-2 group-hover:text-efb-red transition-colors mb-1.5">
+                                                    {rp.title}
+                                                </h4>
+                                                <div className="flex items-center gap-1.5 text-[12px] text-gray-500">
+                                                    <Clock className="w-3 h-3" />
+                                                    {timeAgo(rp.publishedAt || rp.createdAt)}
                                                 </div>
                                             </Link>
                                         ))}
                                     </div>
                                 </div>
                             )}
-                        </div>
+                        </article>
+                    </motion.div>
 
-                        <Link href="/tin-tuc" className="flex items-center gap-2 p-3 bg-white rounded-xl border border-gray-100 text-xs font-medium text-gray-500 hover:text-efb-red hover:border-efb-red/20 transition-all">
-                            <ArrowLeft className="w-3.5 h-3.5" /> Quay lại trang Tin tức
-                        </Link>
+                    {/* ===== RIGHT COLUMN: Sidebar ===== */}
+                    <div className="lg:col-span-4">
+                        <div className="sticky top-[96px] space-y-8">
+                            
+                            {/* Trending Posts Widget (Newspaper Style) */}
+                            {trendingPosts.length > 0 && (
+                                <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+                                    <div className="border-b border-gray-100 bg-white px-5 py-4 flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <Flame className="w-5 h-5 text-efb-red" />
+                                            <h3 className="text-[16px] font-semibold text-gray-900 uppercase">Tin nổi bật</h3>
+                                        </div>
+                                    </div>
+                                    <div className="flex flex-col p-2">
+                                        {trendingPosts.map((rp: any, i: number) => (
+                                            <Link key={`sidebar-${rp._id}`} href={`/tin-tuc/${rp.slug}`} className="group flex items-start gap-4 p-3 hover:bg-gray-50 transition-colors rounded-lg">
+                                                {/* Trending Number Indicator */}
+                                                <div className="w-8 h-8 rounded-full bg-gray-100 text-gray-400 font-semibold text-[15px] flex items-center justify-center flex-shrink-0 group-hover:bg-efb-red group-hover:text-white transition-colors">
+                                                    {i + 1}
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <h4 className="text-[14px] font-semibold text-gray-800 line-clamp-3 leading-[1.4] group-hover:text-efb-red transition-colors mb-1.5">
+                                                        {rp.title}
+                                                    </h4>
+                                                    <span className="text-[11px] text-gray-500 flex items-center gap-1">
+                                                        <Clock className="w-3 h-3" />
+                                                        {timeAgo(rp.publishedAt || rp.createdAt)}
+                                                    </span>
+                                                </div>
+                                            </Link>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Promotional Banner */}
+                            <div className="bg-gradient-to-br from-[#0F172A] to-gray-900 rounded-xl p-6 text-white relative overflow-hidden shadow-lg border border-gray-800">
+                                <div className="absolute -top-10 -right-10 w-32 h-32 bg-efb-red/20 rounded-full blur-2xl" />
+                                <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-efb-gold/20 rounded-full blur-2xl" />
+                                <div className="relative z-10">
+                                    <h3 className="text-xl font-semibold mb-2 text-efb-gold">Giải Đấu 6v6</h3>
+                                    <p className="text-sm text-gray-300 font-medium leading-relaxed mb-5">Đăng ký tham gia hệ thống giải đấu bóng đá phong trào chuyên nghiệp nhất Việt Nam.</p>
+                                    <Link href="/giai-dau" className="inline-flex items-center justify-center w-full gap-2 px-4 py-2.5 bg-efb-red text-white text-sm font-semibold rounded-lg hover:bg-efb-red-light transition-all">
+                                        Đăng ký ngay <ArrowRight className="w-4 h-4" />
+                                    </Link>
+                                </div>
+                            </div>
+
+                        </div>
                     </div>
                 </div>
             </div>
+
+            {/* Apple-style Premium Share Modal */}
+            <AnimatePresence>
+                {shareModalOpen && (
+                    <div className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center sm:p-6">
+                        {/* Glassmorphism Backdrop */}
+                        <motion.div 
+                            initial={{ opacity: 0 }} 
+                            animate={{ opacity: 1 }} 
+                            exit={{ opacity: 0 }} 
+                            transition={{ duration: 0.2 }}
+                            onClick={() => setShareModalOpen(false)} 
+                            className="absolute inset-0 bg-black/40 backdrop-blur-md" 
+                        />
+                        
+                        {/* Modal Panel (Apple Bottom Sheet on Mobile, Centered on Desktop) */}
+                        <motion.div 
+                            initial={{ opacity: 0, y: "100%" }} 
+                            animate={{ opacity: 1, y: 0 }} 
+                            exit={{ opacity: 0, y: "100%" }} 
+                            transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                            className="relative w-full max-w-sm sm:max-w-md bg-white/95 backdrop-blur-2xl rounded-t-[32px] sm:rounded-[32px] shadow-2xl overflow-hidden flex flex-col border border-white/20 pb-safe sm:pb-0"
+                        >
+                            {/* Header */}
+                            <div className="flex items-center justify-between px-6 py-5 relative z-10">
+                                <h3 className="text-[17px] font-semibold text-gray-900">Chia sẻ bài viết</h3>
+                                <button onClick={() => setShareModalOpen(false)} className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:text-gray-900 hover:bg-gray-200 transition-colors">
+                                    <X className="w-4 h-4" />
+                                </button>
+                            </div>
+                            
+                            {/* SEO Card Preview */}
+                            <div className="px-6 pb-6">
+                                <div className="flex gap-3.5 bg-[#F2F2F7]/80 p-3.5 rounded-2xl border border-black/5">
+                                    {post.coverImage ? (
+                                        <div className="w-[60px] h-[60px] rounded-[14px] overflow-hidden flex-shrink-0 bg-white shadow-sm border border-black/5">
+                                            <img src={post.coverImage} alt="Preview" className="w-full h-full object-cover" />
+                                        </div>
+                                    ) : (
+                                        <div className="w-[60px] h-[60px] rounded-[14px] bg-white shadow-sm border border-black/5 flex items-center justify-center flex-shrink-0">
+                                            <Newspaper className="w-6 h-6 text-gray-400" />
+                                        </div>
+                                    )}
+                                    <div className="flex-1 min-w-0 flex flex-col justify-center">
+                                        <p className="text-[11px] font-medium text-gray-500 uppercase mb-0.5">6v6vietnam.vn</p>
+                                        <h4 className="text-[14px] font-semibold text-gray-900 line-clamp-2 leading-snug">{post.title}</h4>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Share Options Grid */}
+                            <div className="px-6 pb-8 sm:pb-8">
+                                <div className="grid grid-cols-4 gap-4">
+                                    <button onClick={() => handleSharePlatform('facebook')} className="flex flex-col items-center gap-2 group">
+                                        <div className="w-14 h-14 rounded-[16px] bg-[#1877F2] text-white flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform duration-300">
+                                            <svg className="w-7 h-7 fill-current" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                                        </div>
+                                        <span className="text-[11px] font-medium text-gray-600">Facebook</span>
+                                    </button>
+                                    <button onClick={() => handleSharePlatform('zalo')} className="flex flex-col items-center gap-2 group">
+                                        <div className="w-14 h-14 rounded-[16px] bg-[#0068FF] text-white flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform duration-300">
+                                            <MessageCircle className="w-7 h-7" />
+                                        </div>
+                                        <span className="text-[11px] font-medium text-gray-600">Zalo</span>
+                                    </button>
+                                    <button onClick={() => handleSharePlatform('twitter')} className="flex flex-col items-center gap-2 group">
+                                        <div className="w-14 h-14 rounded-[16px] bg-black text-white flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform duration-300">
+                                            <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.008 4.126H5.078z"/></svg>
+                                        </div>
+                                        <span className="text-[11px] font-medium text-gray-600">X (Twitter)</span>
+                                    </button>
+                                    <button onClick={copyLink} className="flex flex-col items-center gap-2 group relative">
+                                        <div className="w-14 h-14 rounded-[16px] bg-[#F2F2F7] text-gray-700 flex items-center justify-center shadow-sm border border-black/5 group-hover:scale-105 transition-transform duration-300">
+                                            {copied ? <Check className="w-6 h-6 text-emerald-500" /> : <Link2 className="w-6 h-6" />}
+                                        </div>
+                                        <span className="text-[11px] font-medium text-gray-600">{copied ? "Đã chép" : "Sao chép"}</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
 
             {/* Scroll top */}
             {showScrollTop && (
@@ -297,9 +402,9 @@ export default function PostDetailPage({ params }: { params: Promise<{ slug: str
                     initial={{ opacity: 0, scale: 0.8 }}
                     animate={{ opacity: 1, scale: 1 }}
                     onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-                    className="fixed bottom-6 right-6 w-10 h-10 bg-efb-red text-white rounded-full shadow-lg flex items-center justify-center hover:bg-efb-red-light transition-colors z-40"
+                    className="fixed bottom-6 right-6 w-11 h-11 bg-gray-900 text-white rounded-full shadow-xl flex items-center justify-center hover:bg-efb-red transition-colors z-40"
                 >
-                    <ArrowUp className="w-4 h-4" />
+                    <ArrowUp className="w-5 h-5" />
                 </motion.button>
             )}
         </div>

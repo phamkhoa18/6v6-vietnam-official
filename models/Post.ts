@@ -8,6 +8,7 @@ export interface IPost extends Document {
     content: string;
     coverImage: string;
     category: string;
+    categoryRef?: mongoose.Types.ObjectId;
     tags: string[];
     author: mongoose.Types.ObjectId;
     status: "draft" | "published";
@@ -49,6 +50,10 @@ const PostSchema = new Schema<IPost>(
         category: {
             type: String,
             default: "news",
+        },
+        categoryRef: {
+            type: Schema.Types.ObjectId,
+            ref: "Category",
         },
         tags: [{ type: String }],
         author: {

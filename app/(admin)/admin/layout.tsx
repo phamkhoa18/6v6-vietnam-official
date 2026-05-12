@@ -18,7 +18,9 @@ import {
     Menu,
     FileText,
     ArrowLeft,
-    ShieldAlert
+    ShieldAlert,
+    Globe,
+    FolderTree
 } from "lucide-react";
 import { Loader2 } from "lucide-react";
 
@@ -27,6 +29,8 @@ const adminSidebarLinks = [
     { label: "Người dùng", href: "/admin/nguoi-dung", icon: Users },
     { label: "Giải đấu", href: "/admin/giai-dau", icon: Trophy },
     { label: "Bài viết", href: "/admin/bai-viet", icon: FileText },
+    { label: "Danh mục", href: "/admin/danh-muc", icon: FolderTree },
+    { label: "Quản lý Menu", href: "/admin/menu", icon: Globe },
     { label: "Cài đặt", href: "/admin/cai-dat", icon: Settings },
 ];
 

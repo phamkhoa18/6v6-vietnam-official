@@ -9,7 +9,7 @@ import {
     Loader2, Image as ImageIcon, Globe, Megaphone, BookOpen,
     RefreshCw, Pin, Star, Newspaper, Search as SearchIcon,
     FileText, Hash, Code, AlertCircle,
-    Trash2, CalendarIcon, History, ExternalLink
+    Trash2, CalendarIcon, History, ExternalLink, FolderTree
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,6 +30,7 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import { useConfirmDialog } from "@/components/ui/confirm-dialog";
+import { CategoryIcon } from "@/lib/category-icons";
 
 const TiptapEditor = dynamic(() => import("@/components/admin/TiptapEditor"), { ssr: false });
 
@@ -52,28 +53,28 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
     const [isUploading, setIsUploading] = useState(false);
     const [scheduledDate, setScheduledDate] = useState<Date | undefined>();
     const [postMeta, setPostMeta] = useState<any>(null);
+    const [categories, setCategories] = useState<any[]>([]);
+
+    useEffect(() => {
+        const loadCategories = async () => {
+            try {
+                const res = await adminAPI.getCategories();
+                if (res.success) setCategories(res.data.categories || []);
+            } catch (e) { console.error("Load categories error:", e); }
+        };
+        loadCategories();
+    }, []);
 
     const [form, setForm] = useState({
-        title: "",
-        content: "",
-        excerpt: "",
-        category: "news",
-        status: "draft" as string,
-        tags: "",
-        isPinned: false,
-        isFeatured: false,
-        coverImage: "",
-        gallery: [] as string[],
+        title: "", content: "", excerpt: "",
+        category: "news", categoryRef: "",
+        status: "draft" as string, tags: "",
+        isPinned: false, isFeatured: false,
+        coverImage: "", gallery: [] as string[],
         seo: {
-            metaTitle: "",
-            metaDescription: "",
-            metaKeywords: "",
-            ogImage: "",
-            ogTitle: "",
-            ogDescription: "",
-            canonicalUrl: "",
-            noIndex: false,
-            structuredData: "",
+            metaTitle: "", metaDescription: "", metaKeywords: "",
+            ogImage: "", ogTitle: "", ogDescription: "",
+            canonicalUrl: "", noIndex: false, structuredData: "",
         },
     });
 
@@ -93,6 +94,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                     content: post.content || "",
                     excerpt: post.excerpt || "",
                     category: post.category || "news",
+                    categoryRef: post.categoryRef?._id || post.categoryRef || "",
                     status: post.status || "draft",
                     tags: (post.tags || []).join(", "),
                     isPinned: post.isPinned || false,
@@ -177,8 +179,8 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
         try {
             const payload = {
                 ...form, status: publishNow ? "published" : form.status,
-                tags: form.tags.split(",").map(t => t.trim()).filter(Boolean),
-                seo: { ...form.seo, metaKeywords: form.seo.metaKeywords.split(",").map(t => t.trim()).filter(Boolean) },
+                tags: form.tags.split(",").map((t: string) => t.trim()).filter(Boolean),
+                seo: { ...form.seo, metaKeywords: form.seo.metaKeywords.split(",").map((t: string) => t.trim()).filter(Boolean) },
                 scheduledAt: scheduledDate ? scheduledDate.toISOString() : undefined,
             };
             const res = await adminAPI.updatePost(id, payload);
@@ -356,7 +358,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                                 <CardContent>
                                     <div className="p-4 rounded-lg bg-muted/50 border space-y-1">
                                         <p className="text-sm text-blue-700 font-medium truncate">{form.seo.metaTitle || form.title || "Tiêu đề"}</p>
-                                        <p className="text-xs text-emerald-700 truncate">6v6.vn/bai-viet/{postMeta?.slug || "slug"}</p>
+                                        <p className="text-xs text-emerald-700 truncate">efootball.vn/bai-viet/{postMeta?.slug || "slug"}</p>
                                         <p className="text-xs text-muted-foreground line-clamp-2">{form.seo.metaDescription || form.excerpt || "Mô tả..."}</p>
                                     </div>
                                 </CardContent>
@@ -376,7 +378,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                                     </div>
                                     <div className="space-y-2">
                                         <Label className="text-xs">Meta Keywords</Label>
-                                        <Input value={form.seo.metaKeywords} onChange={(e) => updateSEO("metaKeywords", e.target.value)} placeholder="6v6, cup, giải đấu" />
+                                        <Input value={form.seo.metaKeywords} onChange={(e) => updateSEO("metaKeywords", e.target.value)} placeholder="efootball, cup, giải đấu" />
                                     </div>
                                 </CardContent>
                             </Card>
@@ -397,7 +399,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                             <Card>
                                 <CardHeader className="pb-3"><CardTitle className="text-sm flex items-center gap-2"><Code className="w-4 h-4 text-primary" /> Nâng cao</CardTitle></CardHeader>
                                 <CardContent className="space-y-4">
-                                    <div className="space-y-2"><Label className="text-xs">Canonical URL</Label><Input value={form.seo.canonicalUrl} onChange={(e) => updateSEO("canonicalUrl", e.target.value)} placeholder="https://6v6.vn/..." /></div>
+                                    <div className="space-y-2"><Label className="text-xs">Canonical URL</Label><Input value={form.seo.canonicalUrl} onChange={(e) => updateSEO("canonicalUrl", e.target.value)} placeholder="https://efootball.vn/..." /></div>
                                     <div className="flex items-center justify-between">
                                         <div><Label className="text-sm">noIndex</Label><p className="text-[11px] text-muted-foreground">Ẩn khỏi Google</p></div>
                                         <Switch checked={form.seo.noIndex} onCheckedChange={(val) => updateSEO("noIndex", val)} />
@@ -458,22 +460,32 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                             <Separator />
 
                             <div className="space-y-2">
-                                <Label className="text-xs">Danh mục</Label>
-                                <Select value={form.category} onValueChange={(val) => updateForm("category", val)}>
-                                    <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                                <Label className="text-xs flex items-center gap-1"><FolderTree className="w-3 h-3"/> Danh mục</Label>
+                                <Select value={form.categoryRef || form.category} onValueChange={(val) => {
+                                    const cat = categories.find(c => c._id === val);
+                                    if (cat) setForm(prev => ({ ...prev, categoryRef: cat._id, category: cat.slug }));
+                                    else updateForm("category", val);
+                                }}>
+                                    <SelectTrigger className="w-full"><SelectValue placeholder="Chọn danh mục"/></SelectTrigger>
                                     <SelectContent>
-                                        {categoryOptions.map(cat => (
-                                            <SelectItem key={cat.value} value={cat.value}>
-                                                <div className="flex items-center gap-2"><cat.icon className="w-3.5 h-3.5" /> {cat.label}</div>
+                                        {categories.filter(c => c.isActive).map(cat => (
+                                            <SelectItem key={cat._id} value={cat._id}>
+                                                <div className="flex items-center gap-2"><CategoryIcon name={cat.icon} className="w-3.5 h-3.5" /> {cat.name}</div>
                                             </SelectItem>
                                         ))}
+                                        {categories.length === 0 && <>
+                                            <SelectItem value="news">Tin tức</SelectItem>
+                                            <SelectItem value="announcement">Thông báo</SelectItem>
+                                            <SelectItem value="guide">Hướng dẫn</SelectItem>
+                                            <SelectItem value="update">Cập nhật</SelectItem>
+                                        </>}
                                     </SelectContent>
                                 </Select>
                             </div>
 
                             <div className="space-y-2">
                                 <Label className="text-xs flex items-center gap-1"><Hash className="w-3 h-3" /> Tags</Label>
-                                <Input value={form.tags} onChange={(e) => updateForm("tags", e.target.value)} placeholder="6v6, giải đấu" className="h-9 text-sm" />
+                                <Input value={form.tags} onChange={(e) => updateForm("tags", e.target.value)} placeholder="efootball, giải đấu" className="h-9 text-sm" />
                             </div>
 
                             <Separator />
