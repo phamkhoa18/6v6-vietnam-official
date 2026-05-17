@@ -49,7 +49,7 @@ export function HowItWorksSection() {
             <div className="absolute top-20 right-[5%] w-64 h-64 bg-[#A01B1B]/[0.03] rounded-full blur-[100px] pointer-events-none" />
             <div className="absolute bottom-10 left-[5%] w-48 h-48 bg-[#D4871A]/[0.04] rounded-full blur-[100px] pointer-events-none" />
 
-            <div className="max-w-[1200px] mx-auto px-6 lg:px-8 relative z-10">
+            <div className="max-w-[1200px] mx-auto px-4 lg:px-8 relative z-10">
                 {/* Header */}
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}

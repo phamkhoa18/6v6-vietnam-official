@@ -12,11 +12,13 @@ export async function GET(req: NextRequest) {
         const page = parseInt(searchParams.get("page") || "1");
         const limit = parseInt(searchParams.get("limit") || "12");
         const category = searchParams.get("category");
+        const tag = searchParams.get("tag");
         const search = searchParams.get("search") || "";
         const featured = searchParams.get("featured");
 
         const query: any = { status: "published" };
         if (category) query.category = category;
+        if (tag) query.tags = tag;
         if (featured === "true") query.isFeatured = true;
         if (search) {
             query.$or = [

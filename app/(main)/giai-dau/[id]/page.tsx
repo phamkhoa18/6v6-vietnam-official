@@ -52,6 +52,7 @@ function TournamentDetailContent() {
     const [matches, setMatches] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [activeTab, setActiveTab] = useState("overview");
+    const [playerSearch, setPlayerSearch] = useState("");
     const [showRegisterModal, setShowRegisterModal] = useState(false);
     const [isRegistering, setIsRegistering] = useState(false);
     const [myRegistration, setMyRegistration] = useState<any>(null);
@@ -309,6 +310,14 @@ function TournamentDetailContent() {
     const hasGroups = Object.keys(groups).length > 0 && Object.keys(groups)[0] !== "—";
     const hasBracket = Object.keys(bracketRounds).length > 0;
     const activeParticipants = participants.filter(p => p.status === "active");
+    const filteredParticipants = activeParticipants.filter(p => {
+        if (!playerSearch) return true;
+        const s = playerSearch.toLowerCase();
+        const isMatch = [p.name, p.user?.name, p.captain?.name, p.user?.playerId, p.captain?.playerId].some(
+            val => val && String(val).toLowerCase().includes(s)
+        );
+        return isMatch;
+    });
 
     const formatDate = (d: string) => d ? new Date(d).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" }) : "N/A";
 
@@ -626,73 +635,116 @@ function TournamentDetailContent() {
                         )}
 
                         {activeTab === "participants" && (
-                            <div className="bg-white rounded-xl border border-gray-100 p-5 sm:p-6 shadow-sm">
-                                <h3 className="text-[15px] font-bold text-gray-900 mb-5">Danh sách tham gia ({activeParticipants.length})</h3>
-                                {activeParticipants.length === 0 ? (
-                                    <div className="text-center py-10">
-                                        <Users className="w-10 h-10 text-gray-200 mx-auto mb-3" />
-                                        <p className="text-gray-500 text-sm">Chưa có ai tham gia.</p>
+                            <div className="space-y-4">
+                                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                                    <div>
+                                        <h3 className="text-lg font-semibold text-gray-900">Danh sách tham gia</h3>
+                                        <p className="text-xs text-gray-400 mt-0.5">{activeParticipants.length} đội / vận động viên</p>
                                     </div>
-                                ) : (
-                                    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
-                                        <div className="overflow-x-auto">
-                                            <table className="w-full text-sm">
-                                                <thead>
-                                                    <tr className="text-[10px] font-bold text-gray-500 uppercase border-b border-gray-200 bg-gray-50">
-                                                        <th className="px-4 py-3 text-left w-12 rounded-tl-lg">#</th>
-                                                        <th className="px-4 py-3 text-left">Thông tin</th>
-                                                        {tournament?.gameMode !== "6v6" && tournament?.gameMode !== "1v1" && <th className="px-4 py-3 text-left">Đồng đội</th>}
-                                                        <th className="px-4 py-3 text-center">Bảng</th>
-                                                        <th className="px-4 py-3 text-center rounded-tr-lg">Seed</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody className="divide-y divide-gray-100">
-                                                    {activeParticipants.map((p, idx) => {
-                                                        const is6v6 = tournament?.gameMode === "6v6";
-                                                        const is1v1 = tournament?.gameMode === "1v1";
-                                                        const primaryUser = is1v1 ? p.user : p.captain;
-                                                        const profileUrl = primaryUser ? `/profile/${primaryUser._id}` : "#";
-
-                                                        return (
-                                                            <tr key={p._id} className="hover:bg-gray-50 transition-colors group">
-                                                                <td className="px-4 py-3.5 text-gray-400 font-semibold">{idx + 1}</td>
-                                                                <td className="px-4 py-3.5">
-                                                                    <Link href={profileUrl} className="flex items-center gap-3">
-                                                                        <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center flex-shrink-0 border border-gray-200 shadow-sm overflow-hidden">
-                                                                            {is6v6 ? (
-                                                                                p.logo ? <img src={p.logo} alt="" className="w-full h-full object-cover" /> : <Shield className="w-4 h-4 text-gray-400 group-hover:text-efb-red transition-colors" />
-                                                                            ) : (
-                                                                                primaryUser?.avatar ? <img src={primaryUser.avatar} alt="" className="w-full h-full object-cover" /> : <User className="w-4 h-4 text-gray-400 group-hover:text-efb-red transition-colors" />
-                                                                            )}
-                                                                        </div>
-                                                                        <span className="font-bold text-[13px] text-gray-900 group-hover:text-efb-red transition-colors">
-                                                                            {is6v6 ? p.name : (primaryUser?.name || "Khuyết danh")}
-                                                                        </span>
-                                                                    </Link>
-                                                                </td>
-                                                                {(!is6v6 && !is1v1) && (
-                                                                    <td className="px-4 py-3.5">
-                                                                        {p.members && p.members.length > 1 ? (
-                                                                            <span className="text-[11px] text-gray-600 font-medium bg-gray-100 px-2.5 py-1 rounded-md border border-gray-200">
-                                                                                + {p.members.length - 1} thành viên
-                                                                            </span>
-                                                                        ) : <span className="text-gray-300 text-xs">—</span>}
-                                                                    </td>
-                                                                )}
-                                                                <td className="px-4 py-3.5 text-center">
-                                                                    {p.group ? <span className="bg-gray-100 text-gray-700 text-[10px] px-2.5 py-1 rounded-md font-bold uppercase border border-gray-200">Bảng {p.group}</span> : <span className="text-gray-300">—</span>}
-                                                                </td>
-                                                                <td className="px-4 py-3.5 text-center">
-                                                                    {p.seed ? <span className="text-[13px] font-black text-gray-700">{p.seed}</span> : <span className="text-gray-300">—</span>}
-                                                                </td>
-                                                            </tr>
-                                                        );
-                                                    })}
-                                                </tbody>
-                                            </table>
+                                    <div className="flex items-center gap-2">
+                                        <div className="relative">
+                                            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                                            <input
+                                                type="text"
+                                                placeholder="Tìm VĐV, đội..."
+                                                value={playerSearch}
+                                                onChange={(e) => setPlayerSearch(e.target.value)}
+                                                className="pl-9 h-9 text-sm rounded-lg border border-gray-200 w-[200px] focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all bg-white"
+                                            />
                                         </div>
                                     </div>
-                                )}
+                                </div>
+
+                                <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full text-sm" style={{ minWidth: '600px' }}>
+                                            <thead>
+                                                <tr className="bg-gradient-to-r from-slate-800 to-slate-900 text-white text-[10px] uppercase tracking-wider">
+                                                    <th className="px-3 sm:px-4 py-3 text-center w-10 sm:w-14">#</th>
+                                                    <th className="px-3 sm:px-4 py-3 text-left">VĐV / Đội</th>
+                                                    {tournament?.gameMode !== "6v6" && tournament?.gameMode !== "1v1" && <th className="px-3 sm:px-4 py-3 text-left">Đồng đội</th>}
+                                                    <th className="px-3 sm:px-4 py-3 text-center w-24">Bảng</th>
+                                                    <th className="px-3 sm:px-4 py-3 text-center w-20">Seed</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {filteredParticipants.map((p, idx) => {
+                                                    const is6v6 = tournament?.gameMode === "6v6";
+                                                    const is1v1 = tournament?.gameMode === "1v1";
+                                                    const primaryUser = is1v1 ? p.user : p.captain;
+                                                    const avatarSrc = is6v6 ? p.logo : (primaryUser?.avatar || null);
+                                                    const playerName = is6v6 ? p.name : (primaryUser?.name || "Khuyết danh");
+                                                    const playerId = primaryUser?.playerId;
+
+                                                    return (
+                                                        <tr key={p._id} className="border-b border-gray-50 last:border-0 hover:bg-blue-50/30 transition-colors">
+                                                            <td className="px-3 sm:px-4 py-3 text-center">
+                                                                <span className="text-sm font-bold text-slate-400">{idx + 1}</span>
+                                                            </td>
+                                                            <td className="px-3 sm:px-4 py-3">
+                                                                <div className="flex items-center gap-2.5 sm:gap-3 cursor-pointer" onClick={() => primaryUser?._id && router.push(`/profile/${primaryUser._id}`)}>
+                                                                    <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-gray-100 flex-shrink-0 flex items-center justify-center overflow-hidden border border-gray-200">
+                                                                        {avatarSrc ? <img src={avatarSrc} className="w-full h-full object-cover" alt="" /> : <Users className="w-4 h-4 text-gray-300" />}
+                                                                    </div>
+                                                                    <div className="min-w-0 flex flex-col gap-[2px]">
+                                                                        <div className="flex items-center gap-1.5">
+                                                                            <p className="text-[13px] sm:text-[14px] font-semibold text-gray-900 truncate tracking-tight">{playerName}</p>
+                                                                            {playerId && (
+                                                                                <span className="inline-flex items-center text-[9px] sm:text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded-md tabular-nums">#{playerId}</span>
+                                                                            )}
+                                                                        </div>
+                                                                        {is6v6 && p.shortName && (
+                                                                            <p className="text-[10px] sm:text-[11px] text-gray-400 truncate mt-0.5 font-medium">{p.shortName}</p>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                            </td>
+                                                            {(!is6v6 && !is1v1) && (
+                                                                <td className="px-3 sm:px-4 py-3">
+                                                                    {p.members && p.members.filter((m: any) => m.user?._id !== primaryUser?._id).length > 0 ? (
+                                                                        <div className="flex flex-col gap-2">
+                                                                            {p.members.filter((m: any) => m.user?._id !== primaryUser?._id).map((m: any) => {
+                                                                                const mUser = m.user;
+                                                                                if (!mUser) return null;
+                                                                                return (
+                                                                                    <div key={mUser._id} className="flex items-center gap-2 cursor-pointer group/tm" onClick={() => router.push(`/profile/${mUser._id}`)}>
+                                                                                        <div className="w-6 h-6 rounded-full bg-gray-100 flex-shrink-0 flex items-center justify-center overflow-hidden border border-gray-200">
+                                                                                            {mUser.avatar ? <img src={mUser.avatar} className="w-full h-full object-cover" alt="" /> : <User className="w-3 h-3 text-gray-300 group-hover/tm:text-efb-red transition-colors" />}
+                                                                                        </div>
+                                                                                        <div className="flex items-center gap-1.5">
+                                                                                            <p className="text-[12px] font-medium text-gray-700 truncate tracking-tight group-hover/tm:text-efb-red transition-colors">{mUser.name || "Khuyết danh"}</p>
+                                                                                            {mUser.playerId && (
+                                                                                                <span className="inline-flex items-center text-[9px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-1 py-px rounded-md tabular-nums">#{mUser.playerId}</span>
+                                                                                            )}
+                                                                                        </div>
+                                                                                    </div>
+                                                                                );
+                                                                            })}
+                                                                        </div>
+                                                                    ) : <span className="text-gray-300 text-xs">—</span>}
+                                                                </td>
+                                                            )}
+                                                            <td className="px-3 sm:px-4 py-3 text-center">
+                                                                {p.group ? <span className="bg-gray-100 text-gray-700 text-[10px] px-2.5 py-1 rounded-md font-bold uppercase border border-gray-200">Bảng {p.group}</span> : <span className="text-gray-300">—</span>}
+                                                            </td>
+                                                            <td className="px-3 sm:px-4 py-3 text-center">
+                                                                <span className="text-xs sm:text-sm font-semibold text-gray-600 tabular-nums">
+                                                                    {p.seed || '—'}
+                                                                </span>
+                                                            </td>
+                                                        </tr>
+                                                    );
+                                                })}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    {filteredParticipants.length === 0 && (
+                                        <div className="text-center py-16">
+                                            <Users className="w-12 h-12 text-gray-200 mx-auto mb-3" />
+                                            <p className="text-sm text-gray-400">{playerSearch.trim() ? 'Không tìm thấy VĐV nào' : 'Chưa có đội nào tham gia giải đấu này'}</p>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         )}
 
@@ -796,59 +848,133 @@ function TournamentDetailContent() {
                                     </div>
                                 )}
 
-                                {(hasBracket || format === "single_elimination") && (
+                                {format === "single_elimination" && (
                                     <div>
-                                        <h3 className="text-[15px] font-bold text-gray-900 mb-4">{format === "single_elimination" ? "Nhánh đấu trực tiếp" : "Vòng loại trực tiếp"}</h3>
-                                        <div className="bg-white rounded-xl border border-gray-200 p-6 overflow-x-auto shadow-sm">
-                                            <div className="flex gap-8 min-w-max">
-                                                {Object.entries(bracketRounds).sort(([a], [b]) => Number(a) - Number(b)).map(([round, roundMatches]) => {
+                                        {/* Header */}
+                                        <div className="mb-4 flex items-center justify-between">
+                                            <h3 className="text-[15px] font-bold text-gray-900">Sơ đồ thi đấu</h3>
+                                            <div className="relative max-w-xs flex-1 sm:flex-none">
+                                                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                                                <input
+                                                    placeholder="Tìm đối thủ..."
+                                                    value={playerSearch}
+                                                    onChange={(e) => setPlayerSearch(e.target.value)}
+                                                    className="pl-9 h-9 text-sm rounded-lg border border-gray-200 w-full sm:w-[200px] focus:outline-none focus:ring-2 focus:ring-red-500/20"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div className="bg-[#FDFDFD] rounded-2xl border border-gray-200 p-8 overflow-auto min-h-[500px] relative shadow-inner">
+                                            {/* Grid background */}
+                                            <div className="absolute inset-0 opacity-[0.4] pointer-events-none" style={{ backgroundImage: `radial-gradient(#E2E8F0 1.2px, transparent 1.2px)`, backgroundSize: '32px 32px' }} />
+                                            
+                                            <div className="inline-flex p-4 min-w-full relative z-10">
+                                                {Object.entries(bracketRounds).sort(([a], [b]) => Number(a) - Number(b)).map(([round, roundMatches], rIndex, roundsArr) => {
+                                                    const isLastRound = rIndex === roundsArr.length - 1;
+                                                    const scale = Math.pow(2, rIndex);
+                                                    const UNIT_HEIGHT = 110;
+                                                    const GAP = 128;
+                                                    const halfGap = GAP / 2;
                                                     const totalRounds = Math.max(...Object.keys(bracketRounds).map(Number));
+
                                                     return (
-                                                        <div key={round} className="flex flex-col gap-6 min-w-[220px]">
-                                                            <div className="text-center mb-2">
-                                                                <span className="text-[11px] font-bold text-gray-600 px-3 py-1 bg-gray-100 rounded-full uppercase tracking-wider">{getRoundName(Number(round), totalRounds)}</span>
-                                                            </div>
-                                                            {roundMatches.map((m: any) => {
-                                                                const isCompleted = m.status === "completed";
-                                                                return (
-                                                                    <div key={m._id} className="w-full bg-white rounded-[6px] border border-[#E2E8F0] shadow-sm flex flex-col overflow-hidden z-20 group relative cursor-pointer hover:scale-[1.02] transition-transform">
-                                                                        {m.status === 'ongoing' && (
-                                                                            <div className="absolute top-0 right-0 left-0 bg-red-500 text-white text-[7px] font-bold text-center py-[1px] uppercase tracking-wider flex items-center justify-center gap-1 z-10">
-                                                                                <span className="w-1 h-1 bg-white rounded-full animate-pulse" /> LIVE
-                                                                            </div>
-                                                                        )}
-                                                                        <div className={`p-1.5 flex flex-col ${isCompleted && m.winner === "A" ? "bg-red-50/20" : ""} ${m.status === 'ongoing' ? 'mt-[10px]' : ''}`}>
-                                                                            <span className="text-[8px] text-gray-400 font-bold text-center mb-0.5">
-                                                                                {getTeamName(m, "A")}
-                                                                            </span>
-                                                                            <div className="flex justify-between items-center px-1">
-                                                                                <div className="flex items-center min-w-0 pr-1 leading-[1.1] gap-0.5">
-                                                                                    <span className={`truncate text-[11px] ${isCompleted && m.winner === "A" ? "text-red-700 font-bold" : "text-gray-800 font-bold"}`}>
-                                                                                        {getTeamName(m, "A")}
-                                                                                    </span>
-                                                                                </div>
-                                                                                <span className={`text-[12px] tabular-nums ml-1 flex-shrink-0 ${isCompleted && m.winner === "A" ? "text-red-600 font-bold" : "text-gray-400 font-semibold"}`}>{isCompleted ? m.scoreA : "-"}</span>
-                                                                            </div>
-                                                                        </div>
-                                                                        
-                                                                        <div className="h-px bg-[#E2E8F0] w-full" />
-                                                                        
-                                                                        <div className={`p-1.5 flex flex-col ${isCompleted && m.winner === "B" ? "bg-red-50/20" : ""}`}>
-                                                                            <span className="text-[8px] text-gray-400 font-bold text-center mb-0.5">
-                                                                                {getTeamName(m, "B")}
-                                                                            </span>
-                                                                            <div className="flex justify-between items-center px-1">
-                                                                                <div className="flex items-center min-w-0 pr-1 leading-[1.1] gap-0.5">
-                                                                                    <span className={`truncate text-[11px] ${isCompleted && m.winner === "B" ? "text-red-700 font-bold" : "text-gray-800 font-bold"}`}>
-                                                                                        {getTeamName(m, "B")}
-                                                                                    </span>
-                                                                                </div>
-                                                                                <span className={`text-[12px] tabular-nums ml-1 flex-shrink-0 ${isCompleted && m.winner === "B" ? "text-red-600 font-bold" : "text-gray-400 font-semibold"}`}>{isCompleted ? m.scoreB : "-"}</span>
-                                                                            </div>
-                                                                        </div>
+                                                        <div key={round} className="flex">
+                                                            <div className="flex flex-col w-[200px]">
+                                                                <div className="h-10 flex items-center justify-center mb-12">
+                                                                    <div className="w-[140px] py-1.5 rounded-sm bg-[#FEEBDB] flex items-center justify-center border border-orange-200/50 shadow-sm">
+                                                                        <span className="text-[12px] font-bold text-gray-800">{getRoundName(Number(round), totalRounds)}</span>
                                                                     </div>
-                                                                );
-                                                            })}
+                                                                </div>
+                                                                <div className="relative flex-1">
+                                                                    {roundMatches.map((m: any, mIdx: number) => {
+                                                                        const topPadding = (scale - 1) * (UNIT_HEIGHT / 2);
+                                                                        const yOffset = topPadding + mIdx * UNIT_HEIGHT * scale;
+                                                                        const isCompleted = m.status === "completed";
+                                                                        
+                                                                        const matchesSearch = playerSearch.trim() === "" || [
+                                                                            getTeamName(m, "A"), getTeamName(m, "B")
+                                                                        ].some(v => v && v.toLowerCase().includes(playerSearch.toLowerCase()));
+
+                                                                        const bY = mIdx;
+                                                                        const isTop = bY % 2 === 0;
+                                                                        const vLen = (UNIT_HEIGHT * scale) / 2;
+
+                                                                        return (
+                                                                            <div
+                                                                                key={m._id}
+                                                                                className={`absolute left-0 flex items-center transition-opacity ${matchesSearch ? 'opacity-100' : 'opacity-20'}`}
+                                                                                style={{
+                                                                                    top: `${yOffset}px`,
+                                                                                    height: `${UNIT_HEIGHT}px`,
+                                                                                    width: '100%'
+                                                                                }}
+                                                                            >
+                                                                                <div className="w-full bg-white rounded-[6px] border border-[#E2E8F0] shadow-sm flex flex-col overflow-hidden z-20 group relative cursor-pointer hover:scale-[1.02] transition-transform">
+                                                                                    {m.status === 'ongoing' && (
+                                                                                        <div className="absolute top-0 right-0 left-0 bg-red-500 text-white text-[7px] font-bold text-center py-[1px] uppercase tracking-wider flex items-center justify-center gap-1 z-10">
+                                                                                            <span className="w-1 h-1 bg-white rounded-full animate-pulse" /> LIVE
+                                                                                        </div>
+                                                                                    )}
+                                                                                    <div className={`p-1.5 flex flex-col ${isCompleted && m.winner === "A" ? "bg-red-50/20" : ""} ${m.status === 'ongoing' ? 'mt-[10px]' : ''}`}>
+                                                                                        <span className="text-[8px] text-gray-400 font-bold text-center mb-0.5">
+                                                                                            {getTeamName(m, "A")}
+                                                                                        </span>
+                                                                                        <div className="flex justify-between items-center px-1">
+                                                                                            <div className="flex items-center min-w-0 pr-1 leading-[1.1] gap-0.5">
+                                                                                                <span className={`truncate text-[11px] ${isCompleted && m.winner === "A" ? "text-red-700 font-bold" : "text-gray-800 font-bold"}`}>
+                                                                                                    {getTeamName(m, "A")}
+                                                                                                </span>
+                                                                                            </div>
+                                                                                            <span className={`text-[12px] tabular-nums ml-1 flex-shrink-0 ${isCompleted && m.winner === "A" ? "text-red-600 font-bold" : "text-gray-400 font-semibold"}`}>{isCompleted ? m.scoreA : "-"}</span>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                    
+                                                                                    <div className="h-px bg-[#E2E8F0] w-full" />
+                                                                                    
+                                                                                    <div className={`p-1.5 flex flex-col ${isCompleted && m.winner === "B" ? "bg-red-50/20" : ""}`}>
+                                                                                        <span className="text-[8px] text-gray-400 font-bold text-center mb-0.5">
+                                                                                            {getTeamName(m, "B")}
+                                                                                        </span>
+                                                                                        <div className="flex justify-between items-center px-1">
+                                                                                            <div className="flex items-center min-w-0 pr-1 leading-[1.1] gap-0.5">
+                                                                                                <span className={`truncate text-[11px] ${isCompleted && m.winner === "B" ? "text-red-700 font-bold" : "text-gray-800 font-bold"}`}>
+                                                                                                    {getTeamName(m, "B")}
+                                                                                                </span>
+                                                                                            </div>
+                                                                                            <span className={`text-[12px] tabular-nums ml-1 flex-shrink-0 ${isCompleted && m.winner === "B" ? "text-red-600 font-bold" : "text-gray-400 font-semibold"}`}>{isCompleted ? m.scoreB : "-"}</span>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                </div>
+
+                                                                                {/* Connector lines to next round */}
+                                                                                {!isLastRound && (
+                                                                                    <>
+                                                                                        <div
+                                                                                            className="absolute bg-[#CBD5E1]"
+                                                                                            style={{ right: `-${halfGap}px`, width: `${halfGap}px`, height: '1px', top: '50%' }}
+                                                                                        />
+                                                                                        <div
+                                                                                            className="absolute bg-[#CBD5E1]"
+                                                                                            style={{
+                                                                                                right: `-${halfGap}px`, width: '1px', height: `${vLen}px`,
+                                                                                                ...(isTop ? { top: '50%' } : { bottom: '50%' })
+                                                                                            }}
+                                                                                        />
+                                                                                        {isTop && (
+                                                                                            <div
+                                                                                                className="absolute bg-[#CBD5E1]"
+                                                                                                style={{ right: `-${GAP}px`, width: `${halfGap}px`, height: '1px', top: `calc(50% + ${vLen}px)` }}
+                                                                                            />
+                                                                                        )}
+                                                                                    </>
+                                                                                )}
+                                                                            </div>
+                                                                        );
+                                                                    })}
+                                                                </div>
+                                                            </div>
+                                                            {/* Spacer between rounds */}
+                                                            {!isLastRound && <div style={{ width: `${GAP}px` }} />}
                                                         </div>
                                                     );
                                                 })}

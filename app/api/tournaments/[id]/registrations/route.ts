@@ -106,14 +106,14 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
         await reg.save();
 
         // Notify the user about their registration status
-        const tournament = await Tournament.findById(id).select("name").lean();
+        const tInfo = await Tournament.findById(id).select("title").lean();
         await Notification.create({
             recipient: reg.user,
             type: "registration",
             title: action === "approve" ? "Đăng ký được duyệt ✅" : "Đăng ký bị từ chối ❌",
             message: action === "approve"
-                ? `Đăng ký của bạn tại giải ${tournament?.name || ''} đã được duyệt thành công!`
-                : `Đăng ký của bạn tại giải ${tournament?.name || ''} đã bị từ chối. Lý do: ${reg.rejectionReason || ''}`,
+                ? `Đăng ký của bạn tại giải ${tInfo?.title || ''} đã được duyệt thành công!`
+                : `Đăng ký của bạn tại giải ${tInfo?.title || ''} đã bị từ chối. Lý do: ${reg.rejectionReason || ''}`,
             link: `/giai-dau/${id}`,
         });
 

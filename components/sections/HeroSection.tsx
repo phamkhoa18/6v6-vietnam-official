@@ -25,7 +25,7 @@ export function HeroSection() {
             className="relative w-full overflow-hidden bg-white"
         >
             {/* Spacer to push banner below fixed navbar (h-18 = 72px) */}
-            <div className="h-12" />
+            <div className="md:h-12 h-14" />
 
             {/* Banner wrapper */}
             <div className="relative w-full">

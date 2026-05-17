@@ -263,6 +263,19 @@
   background-size: 200% 100%;
 }
 
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-marquee {
+  animation: marquee 25s linear infinite;
+}
+
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
+
 /* ===== Glass Effect ===== */
 .glass {
   background: rgba(255, 255, 255, 0.85);

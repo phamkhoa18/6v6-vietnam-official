@@ -12,7 +12,7 @@ export function CTASection() {
 
     return (
         <section ref={ref} className="py-20 lg:py-28 bg-white">
-            <div className="max-w-[1200px] mx-auto px-6 lg:px-8">
+            <div className="max-w-[1200px] mx-auto px-4 lg:px-8">
                 <motion.div
                     initial={{ opacity: 0, y: 30 }}
                     animate={isInView ? { opacity: 1, y: 0 } : {}}

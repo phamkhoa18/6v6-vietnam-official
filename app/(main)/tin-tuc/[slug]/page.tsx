@@ -100,20 +100,22 @@ export default function PostDetailPage({ params }: { params: Promise<{ slug: str
 
             <div className="max-w-[1200px] mx-auto px-4 lg:px-6 pt-4">
                 
-                {/* Breadcrumb (Bongdaplus Style: Inline, simple `»`) */}
-                <div className="flex items-center flex-wrap gap-2 text-[12px] font-medium text-gray-500 mb-5 uppercase">
-                    <Link href="/" className="hover:text-efb-red transition-colors">Trang chủ</Link>
-                    <span className="text-gray-300">»</span>
-                    <Link href="/tin-tuc" className="hover:text-efb-red transition-colors">Tin tức</Link>
+                {/* Breadcrumb */}
+                <nav className="flex items-center gap-1.5 text-[13px] text-gray-400 mb-5 overflow-hidden">
+                    <Link href="/" className="font-medium hover:text-efb-red transition-colors flex-shrink-0">Trang chủ</Link>
+                    <ChevronRight className="w-3.5 h-3.5 flex-shrink-0" />
+                    <Link href="/tin-tuc" className="font-medium hover:text-efb-red transition-colors flex-shrink-0">Tin tức</Link>
                     {post.categoryRef && (
                         <>
-                            <span className="text-gray-300">»</span>
-                            <Link href={`/tin-tuc?category=${post.categoryRef.slug || post.category}`} className="hover:text-efb-red transition-colors text-efb-red">
+                            <ChevronRight className="w-3.5 h-3.5 flex-shrink-0" />
+                            <Link href={`/tin-tuc?category=${post.categoryRef.slug || post.category}`} className="font-medium hover:text-efb-red transition-colors flex-shrink-0">
                                 {post.categoryRef.name}
                             </Link>
                         </>
                     )}
-                </div>
+                    <ChevronRight className="w-3.5 h-3.5 flex-shrink-0" />
+                    <span className="text-gray-600 font-medium truncate">{post.title}</span>
+                </nav>
 
                 <div className="grid lg:grid-cols-12 gap-8">
                     {/* ===== LEFT COLUMN: Main Article ===== */}
@@ -264,27 +266,38 @@ export default function PostDetailPage({ params }: { params: Promise<{ slug: str
                     <div className="lg:col-span-4">
                         <div className="sticky top-[96px] space-y-8">
                             
-                            {/* Trending Posts Widget (Newspaper Style) */}
+                            {/* Tin nổi bật — Sports Style */}
                             {trendingPosts.length > 0 && (
-                                <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
-                                    <div className="border-b border-gray-100 bg-white px-5 py-4 flex items-center justify-between">
-                                        <div className="flex items-center gap-2">
-                                            <Flame className="w-5 h-5 text-efb-red" />
-                                            <h3 className="text-[16px] font-semibold text-gray-900 uppercase">Tin nổi bật</h3>
-                                        </div>
+                                <div className="rounded-xl overflow-hidden shadow-md">
+                                    {/* Header — dark sports bar */}
+                                    <div className="bg-[#0F172A] px-5 py-3.5 flex items-center gap-2.5 relative">
+                                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-efb-red" />
+                                        <Flame className="w-4.5 h-4.5 text-efb-gold" />
+                                        <h3 className="text-[14px] font-bold text-white uppercase tracking-wider">Tin nổi bật</h3>
                                     </div>
-                                    <div className="flex flex-col p-2">
+                                    {/* List */}
+                                    <div className="bg-white">
                                         {trendingPosts.map((rp: any, i: number) => (
-                                            <Link key={`sidebar-${rp._id}`} href={`/tin-tuc/${rp.slug}`} className="group flex items-start gap-4 p-3 hover:bg-gray-50 transition-colors rounded-lg">
-                                                {/* Trending Number Indicator */}
-                                                <div className="w-8 h-8 rounded-full bg-gray-100 text-gray-400 font-semibold text-[15px] flex items-center justify-center flex-shrink-0 group-hover:bg-efb-red group-hover:text-white transition-colors">
-                                                    {i + 1}
+                                            <Link key={`sidebar-${rp._id}`} href={`/tin-tuc/${rp.slug}`}
+                                                className={`group flex items-start gap-3 px-4 py-3.5 hover:bg-red-50/50 transition-colors ${i < trendingPosts.length - 1 ? 'border-b border-gray-100' : ''}`}
+                                            >
+                                                <span className={`text-[20px] font-extrabold leading-none mt-2 flex-shrink-0 ${i < 3 ? 'text-efb-red' : 'text-gray-300'}`}>
+                                                    {String(i + 1).padStart(2, '0')}
+                                                </span>
+                                                <div className="w-16 h-12 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100">
+                                                    {rp.coverImage ? (
+                                                        <img src={rp.coverImage} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                                                    ) : (
+                                                        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
+                                                            <Newspaper className="w-4 h-4 text-gray-300" />
+                                                        </div>
+                                                    )}
                                                 </div>
                                                 <div className="flex-1 min-w-0">
-                                                    <h4 className="text-[14px] font-semibold text-gray-800 line-clamp-3 leading-[1.4] group-hover:text-efb-red transition-colors mb-1.5">
+                                                    <h4 className="text-[13px] font-semibold text-gray-800 line-clamp-2 leading-snug group-hover:text-efb-red transition-colors mb-1">
                                                         {rp.title}
                                                     </h4>
-                                                    <span className="text-[11px] text-gray-500 flex items-center gap-1">
+                                                    <span className="text-[11px] text-gray-400 flex items-center gap-1">
                                                         <Clock className="w-3 h-3" />
                                                         {timeAgo(rp.publishedAt || rp.createdAt)}
                                                     </span>
