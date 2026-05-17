@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { format as formatDate } from "date-fns";
@@ -13,9 +13,9 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import {
     Trophy, ArrowLeft, ArrowRight, Loader2, Calendar as CalendarIcon, Users,
     DollarSign, Settings, Info, MapPin, Wifi, CheckCircle2, BarChart3, Zap, Shield,
-    Hash, Camera, X, ImageIcon
+    Hash, Camera, X, ImageIcon, Upload, FileImage, Search as SearchIcon
 } from "lucide-react";
-import { tournamentAPI } from "@/lib/api";
+import { tournamentAPI, uploadImage } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 
 /* ===== Helpers ===== */
@@ -128,7 +128,14 @@ export default function TaoGiaiDauPage() {
 
     // Banner upload
     const [bannerUrl, setBannerUrl] = useState("");
+    const [bannerPreview, setBannerPreview] = useState("");
     const [isUploadingBanner, setIsUploadingBanner] = useState(false);
+    const [isDragging, setIsDragging] = useState(false);
+    const bannerInputRef = useRef<HTMLInputElement>(null);
+
+    // SEO fields
+    const [seoTitle, setSeoTitle] = useState("");
+    const [seoDescription, setSeoDescription] = useState("");
 
     const maxSlots = parseInt(maxSlotsStr, 10) || 2;
 
@@ -143,6 +150,60 @@ export default function TaoGiaiDauPage() {
             setTeamsPerGroup("4"); setAdvancePerGroup("2");
         }
     };
+
+    /* ===== Banner Upload Handler ===== */
+    const handleBannerUpload = useCallback(async (file: File) => {
+        if (!file) return;
+        // Validate image type
+        if (!file.type.startsWith("image/")) {
+            setError("Chỉ chấp nhận file hình ảnh (JPG, PNG, WebP...)");
+            return;
+        }
+        // Validate file size (max 10MB)
+        if (file.size > 10 * 1024 * 1024) {
+            setError("File quá lớn, tối đa 10MB");
+            return;
+        }
+        setIsUploadingBanner(true);
+        setError("");
+        try {
+            // Show preview immediately
+            const previewUrl = URL.createObjectURL(file);
+            setBannerPreview(previewUrl);
+            // Upload to server
+            const res = await uploadImage(file, "banner");
+            if (res.success) {
+                setBannerUrl(res.data.url);
+            } else {
+                setError(res.message || "Upload ảnh thất bại");
+                setBannerPreview("");
+            }
+        } catch {
+            setError("Có lỗi xảy ra khi upload ảnh");
+            setBannerPreview("");
+        } finally {
+            setIsUploadingBanner(false);
+        }
+    }, []);
+
+    const handleBannerDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        setIsDragging(false);
+        const file = e.dataTransfer.files?.[0];
+        if (file) handleBannerUpload(file);
+    }, [handleBannerUpload]);
+
+    const handleBannerFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) handleBannerUpload(file);
+        // Reset input so same file can be re-selected
+        e.target.value = "";
+    }, [handleBannerUpload]);
+
+    const removeBanner = useCallback(() => {
+        setBannerUrl("");
+        setBannerPreview("");
+    }, []);
 
     const getFormatInfo = () => {
         const n = maxSlots;
@@ -197,10 +258,14 @@ export default function TaoGiaiDauPage() {
                 contact: { phone: contactPhone, facebook: contactFacebook, zalo: contactZalo },
                 isPublic, tags: tags.split(",").map(t => t.trim()).filter(Boolean),
                 status: "draft", banner: bannerUrl,
+                seo: {
+                    title: seoTitle || title,
+                    description: seoDescription || description,
+                },
             };
 
             const res = await tournamentAPI.create(tournamentData);
-            if (res.success) router.push(`/manager/giai-dau/${res.data._id}`);
+            if (res.success) router.push(`/manager/giai-dau/${res.data.tournament._id}`);
             else setError(res.message || "Có lỗi xảy ra khi tạo giải đấu");
         } catch {
             setError("Có lỗi xảy ra, vui lòng thử lại");
@@ -251,7 +316,7 @@ export default function TaoGiaiDauPage() {
 
                     <div className="space-y-2">
                         <Label className="text-sm font-medium">Tên giải đấu *</Label>
-                        <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="VD: 6v6 Hanoi Open 2026" className="h-12 rounded-xl" />
+                        <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="VD: 6v6 Hanoi Open 2026" className="h-12" />
                     </div>
 
                     <div className="space-y-2">
@@ -270,18 +335,149 @@ export default function TaoGiaiDauPage() {
 
                     <div className="space-y-2">
                         <Label className="text-sm font-medium">Mô tả</Label>
-                        <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Giới thiệu về giải đấu..." rows={4} className="w-full rounded-xl border border-gray-200 p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-efb-red/20 focus:border-efb-red transition-all" />
+                        <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Giới thiệu về giải đấu..." rows={4} className="w-full rounded border border-gray-200 p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-efb-red/20 focus:border-efb-red transition-all" />
                     </div>
                     
                     <div className="space-y-2">
                         <Label className="text-sm font-medium">Tags</Label>
-                        <Input value={tags} onChange={(e) => setTags(e.target.value)} placeholder="football, 6v6, hanoi" className="h-12 rounded-xl" />
+                        <Input value={tags} onChange={(e) => setTags(e.target.value)} placeholder="football, 6v6, hanoi" className="h-12" />
                     </div>
 
+                    {/* Banner Image Upload */}
                     <div className="space-y-2">
-                        <Label className="text-sm font-medium flex items-center gap-1.5"><ImageIcon className="w-4 h-4 text-efb-red" /> URL Ảnh banner</Label>
-                        <Input value={bannerUrl} onChange={(e) => setBannerUrl(e.target.value)} placeholder="https://..." className="h-12 rounded-xl" />
-                        {bannerUrl && <img src={bannerUrl} alt="Preview" className="mt-2 w-full h-44 object-cover rounded-xl border border-gray-200" />}
+                        <Label className="text-sm font-medium flex items-center gap-1.5">
+                            <ImageIcon className="w-4 h-4 text-efb-red" /> Ảnh banner giải đấu
+                        </Label>
+                        {(bannerPreview || bannerUrl) ? (
+                            <div className="relative group rounded-xl overflow-hidden border-2 border-gray-200 hover:border-efb-red/30 transition-colors">
+                                <img
+                                    src={bannerPreview || bannerUrl}
+                                    alt="Banner preview"
+                                    className="w-full h-48 object-cover"
+                                />
+                                {isUploadingBanner && (
+                                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center backdrop-blur-sm">
+                                        <div className="flex flex-col items-center gap-2">
+                                            <Loader2 className="w-8 h-8 animate-spin text-white" />
+                                            <span className="text-white text-sm font-medium">Đang tải lên...</span>
+                                        </div>
+                                    </div>
+                                )}
+                                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
+                                    <div className="flex gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => bannerInputRef.current?.click()}
+                                            className="w-10 h-10 rounded-full bg-white/90 flex items-center justify-center hover:bg-white transition-colors shadow-lg"
+                                        >
+                                            <Camera className="w-4 h-4 text-gray-700" />
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={removeBanner}
+                                            className="w-10 h-10 rounded-full bg-red-500/90 flex items-center justify-center hover:bg-red-500 transition-colors shadow-lg"
+                                        >
+                                            <X className="w-4 h-4 text-white" />
+                                        </button>
+                                    </div>
+                                </div>
+                                <div className="absolute bottom-3 left-3 right-3">
+                                    <div className="bg-black/60 backdrop-blur-sm rounded-lg px-3 py-1.5 flex items-center gap-2">
+                                        <FileImage className="w-3.5 h-3.5 text-white/70" />
+                                        <span className="text-white/90 text-xs truncate">{bannerUrl ? "Đã tải lên" : "Đang xử lý..."}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        ) : (
+                            <div
+                                onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                                onDragLeave={() => setIsDragging(false)}
+                                onDrop={handleBannerDrop}
+                                onClick={() => bannerInputRef.current?.click()}
+                                className={`relative cursor-pointer rounded-xl border-2 border-dashed transition-all duration-200 ${
+                                    isDragging
+                                        ? "border-efb-red bg-red-50/50 scale-[1.01]"
+                                        : "border-gray-300 hover:border-efb-red/50 hover:bg-gray-50/50"
+                                }`}
+                            >
+                                <div className="flex flex-col items-center justify-center py-10 px-4">
+                                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-3 transition-colors ${
+                                        isDragging ? "bg-red-100" : "bg-gray-100"
+                                    }`}>
+                                        <Upload className={`w-6 h-6 transition-colors ${
+                                            isDragging ? "text-efb-red" : "text-gray-400"
+                                        }`} />
+                                    </div>
+                                    <p className="text-sm font-medium text-gray-700 mb-1">
+                                        {isDragging ? "Thả ảnh vào đây" : "Kéo thả ảnh hoặc click để chọn"}
+                                    </p>
+                                    <p className="text-xs text-gray-400">JPG, PNG, WebP • Tối đa 10MB</p>
+                                    <p className="text-xs text-gray-400 mt-0.5">Kích thước khuyến nghị: 1200×630px</p>
+                                </div>
+                            </div>
+                        )}
+                        <input
+                            ref={bannerInputRef}
+                            type="file"
+                            accept="image/*"
+                            onChange={handleBannerFileChange}
+                            className="hidden"
+                        />
+                    </div>
+
+                    {/* SEO Section */}
+                    <div className="pt-4 border-t border-gray-100 space-y-4">
+                        <div className="flex items-center gap-2 mb-1">
+                            <div className="w-7 h-7 rounded-lg bg-emerald-50 flex items-center justify-center">
+                                <SearchIcon className="w-3.5 h-3.5 text-emerald-600" />
+                            </div>
+                            <Label className="text-sm font-semibold text-efb-dark">Tối ưu SEO</Label>
+                            <span className="text-[10px] text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">Tùy chọn</span>
+                        </div>
+                        <p className="text-xs text-gray-400 -mt-2">Tối ưu hiển thị trên Google và mạng xã hội. Để trống sẽ tự động sử dụng tên và mô tả giải đấu.</p>
+                        <div className="space-y-2">
+                            <Label className="text-xs text-efb-text-muted">Tiêu đề SEO</Label>
+                            <Input
+                                value={seoTitle}
+                                onChange={(e) => setSeoTitle(e.target.value)}
+                                placeholder={title || "VD: Giải bóng đá 6v6 Hà Nội mở rộng 2026"}
+                                className="h-10 text-sm"
+                                maxLength={70}
+                            />
+                            <div className="flex justify-between">
+                                <span className="text-[10px] text-gray-400">Hiển thị trên Google, Facebook...</span>
+                                <span className={`text-[10px] ${seoTitle.length > 60 ? "text-amber-500" : "text-gray-400"}`}>{seoTitle.length}/70</span>
+                            </div>
+                        </div>
+                        <div className="space-y-2">
+                            <Label className="text-xs text-efb-text-muted">Mô tả SEO</Label>
+                            <textarea
+                                value={seoDescription}
+                                onChange={(e) => setSeoDescription(e.target.value)}
+                                placeholder={description || "VD: Tham gia giải bóng đá sân 6 lớn nhất Hà Nội với tổng giải thưởng 50 triệu đồng..."}
+                                rows={3}
+                                maxLength={160}
+                                className="w-full rounded border border-gray-200 p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-efb-red/20 focus:border-efb-red transition-all"
+                            />
+                            <div className="flex justify-between">
+                                <span className="text-[10px] text-gray-400">Mô tả ngắn gọn về giải đấu</span>
+                                <span className={`text-[10px] ${seoDescription.length > 150 ? "text-amber-500" : "text-gray-400"}`}>{seoDescription.length}/160</span>
+                            </div>
+                        </div>
+
+                        {/* SEO Preview */}
+                        {(seoTitle || title) && (
+                            <div className="p-4 rounded-xl bg-gray-50/80 border border-gray-100 space-y-1">
+                                <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wider mb-2">Xem trước trên Google</p>
+                                <p className="text-blue-700 text-sm font-medium truncate hover:underline cursor-default">
+                                    {seoTitle || title} | 6v6 Vietnam
+                                </p>
+                                <p className="text-emerald-700 text-xs truncate">6v6.vn › giai-dau › {(seoTitle || title || "ten-giai-dau").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/[^a-z0-9]+/g, "-").slice(0, 40)}</p>
+                                <p className="text-gray-600 text-xs line-clamp-2">
+                                    {seoDescription || description || "Mô tả giải đấu sẽ hiển thị tại đây..."}
+                                </p>
+                            </div>
+                        )}
                     </div>
                 </motion.div>
             )}
@@ -318,14 +514,14 @@ export default function TaoGiaiDauPage() {
                         <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="space-y-4 p-4 rounded-xl bg-gray-50/80 border border-gray-100">
                             <Label className="text-sm font-semibold text-efb-dark">Cấu hình điểm số</Label>
                             <div className="grid grid-cols-3 gap-3">
-                                <div className="space-y-1.5"><Label className="text-xs text-efb-text-muted">Thắng</Label><Input value={pointsPerWin} onChange={(e) => setPointsPerWin(e.target.value.replace(/\D/g, ""))} className="h-10 rounded-xl text-center font-bold text-emerald-600" inputMode="numeric" /></div>
-                                <div className="space-y-1.5"><Label className="text-xs text-efb-text-muted">Hòa</Label><Input value={pointsPerDraw} onChange={(e) => setPointsPerDraw(e.target.value.replace(/\D/g, ""))} className="h-10 rounded-xl text-center font-bold text-amber-600" inputMode="numeric" /></div>
-                                <div className="space-y-1.5"><Label className="text-xs text-efb-text-muted">Thua</Label><Input value={pointsPerLoss} onChange={(e) => setPointsPerLoss(e.target.value.replace(/\D/g, ""))} className="h-10 rounded-xl text-center font-bold text-red-500" inputMode="numeric" /></div>
+                                <div className="space-y-1.5"><Label className="text-xs text-efb-text-muted">Thắng</Label><Input value={pointsPerWin} onChange={(e) => setPointsPerWin(e.target.value.replace(/\D/g, ""))} className="h-10 text-center font-bold text-emerald-600" inputMode="numeric" /></div>
+                                <div className="space-y-1.5"><Label className="text-xs text-efb-text-muted">Hòa</Label><Input value={pointsPerDraw} onChange={(e) => setPointsPerDraw(e.target.value.replace(/\D/g, ""))} className="h-10 text-center font-bold text-amber-600" inputMode="numeric" /></div>
+                                <div className="space-y-1.5"><Label className="text-xs text-efb-text-muted">Thua</Label><Input value={pointsPerLoss} onChange={(e) => setPointsPerLoss(e.target.value.replace(/\D/g, ""))} className="h-10 text-center font-bold text-red-500" inputMode="numeric" /></div>
                             </div>
                             {format === "group_stage" && (
                                 <div className="grid grid-cols-2 gap-3 pt-2 border-t border-gray-200">
-                                    <div className="space-y-1.5"><Label className="text-xs text-efb-text-muted">Số đội/bảng</Label><Input value={teamsPerGroup} onChange={(e) => setTeamsPerGroup(e.target.value.replace(/\D/g, ""))} className="h-10 rounded-xl" inputMode="numeric" /></div>
-                                    <div className="space-y-1.5"><Label className="text-xs text-efb-text-muted">Đội đi tiếp/bảng</Label><Input value={advancePerGroup} onChange={(e) => setAdvancePerGroup(e.target.value.replace(/\D/g, ""))} className="h-10 rounded-xl" inputMode="numeric" /></div>
+                                    <div className="space-y-1.5"><Label className="text-xs text-efb-text-muted">Số đội/bảng</Label><Input value={teamsPerGroup} onChange={(e) => setTeamsPerGroup(e.target.value.replace(/\D/g, ""))} className="h-10" inputMode="numeric" /></div>
+                                    <div className="space-y-1.5"><Label className="text-xs text-efb-text-muted">Đội đi tiếp/bảng</Label><Input value={advancePerGroup} onChange={(e) => setAdvancePerGroup(e.target.value.replace(/\D/g, ""))} className="h-10" inputMode="numeric" /></div>
                                 </div>
                             )}
                         </motion.div>
@@ -333,7 +529,7 @@ export default function TaoGiaiDauPage() {
 
                     <div className="space-y-2">
                         <Label className="text-sm font-medium">Số đội tối đa *</Label>
-                        <Input value={maxSlotsStr} onChange={(e) => setMaxSlotsStr(e.target.value.replace(/\D/g, ""))} onBlur={() => { const n = parseInt(maxSlotsStr, 10); if (!n || n < 2) setMaxSlotsStr("2"); }} placeholder="16" className="h-12 rounded-xl" inputMode="numeric" />
+                        <Input value={maxSlotsStr} onChange={(e) => setMaxSlotsStr(e.target.value.replace(/\D/g, ""))} onBlur={() => { const n = parseInt(maxSlotsStr, 10); if (!n || n < 2) setMaxSlotsStr("2"); }} placeholder="16" className="h-12" inputMode="numeric" />
                     </div>
 
                     <div className="flex gap-3">
@@ -347,7 +543,7 @@ export default function TaoGiaiDauPage() {
                         </button>
                     </div>
                     {!isOnline && (
-                        <div className="space-y-2"><Label className="text-sm font-medium">Địa điểm thi đấu</Label><Input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Nhập địa chỉ sân bóng" className="h-12 rounded-xl" /></div>
+                        <div className="space-y-2"><Label className="text-sm font-medium">Địa điểm thi đấu</Label><Input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Nhập địa chỉ sân bóng" className="h-12" /></div>
                     )}
                 </motion.div>
             )}
@@ -369,11 +565,11 @@ export default function TaoGiaiDauPage() {
 
                     <div className="pt-4 border-t border-gray-100 space-y-3">
                         <div className="flex items-center gap-2 mb-4"><DollarSign className="w-4 h-4 text-amber-500" /><Label className="text-sm font-semibold text-efb-dark">Giải thưởng</Label></div>
-                        <div className="space-y-2"><Label className="text-xs text-efb-text-muted">Tổng giải thưởng (VNĐ)</Label><CurrencyInput value={prizeTotal} onChange={setPrizeTotal} placeholder="VD: 10.000.000" className="h-12 rounded-xl" /></div>
+                        <div className="space-y-2"><Label className="text-xs text-efb-text-muted">Tổng giải thưởng (VNĐ)</Label><CurrencyInput value={prizeTotal} onChange={setPrizeTotal} placeholder="VD: 10.000.000" className="h-12" /></div>
                         <div className="grid grid-cols-3 gap-3">
-                            <div className="space-y-2"><Label className="text-xs text-efb-text-muted">🥇 Nhất</Label><CurrencyInput value={prizeFirst} onChange={setPrizeFirst} placeholder="5.000.000" className="h-10 rounded-xl text-sm" /></div>
-                            <div className="space-y-2"><Label className="text-xs text-efb-text-muted">🥈 Nhì</Label><CurrencyInput value={prizeSecond} onChange={setPrizeSecond} placeholder="3.000.000" className="h-10 rounded-xl text-sm" /></div>
-                            <div className="space-y-2"><Label className="text-xs text-efb-text-muted">🥉 Ba</Label><CurrencyInput value={prizeThird} onChange={setPrizeThird} placeholder="1.000.000" className="h-10 rounded-xl text-sm" /></div>
+                            <div className="space-y-2"><Label className="text-xs text-efb-text-muted">🥇 Nhất</Label><CurrencyInput value={prizeFirst} onChange={setPrizeFirst} placeholder="5.000.000" className="h-10 text-sm" /></div>
+                            <div className="space-y-2"><Label className="text-xs text-efb-text-muted">🥈 Nhì</Label><CurrencyInput value={prizeSecond} onChange={setPrizeSecond} placeholder="3.000.000" className="h-10 text-sm" /></div>
+                            <div className="space-y-2"><Label className="text-xs text-efb-text-muted">🥉 Ba</Label><CurrencyInput value={prizeThird} onChange={setPrizeThird} placeholder="1.000.000" className="h-10 text-sm" /></div>
                         </div>
                     </div>
                 </motion.div>
@@ -390,7 +586,7 @@ export default function TaoGiaiDauPage() {
                     <div className="space-y-3">
                         <Label className="text-sm font-semibold">Cài đặt trận đấu</Label>
                         <div className="grid grid-cols-2 gap-3">
-                            <div className="space-y-2"><Label className="text-xs text-efb-text-muted">Thời gian trận (phút)</Label><Input value={matchDuration} onChange={(e) => setMatchDuration(e.target.value.replace(/\D/g, ""))} className="h-10 rounded-xl" inputMode="numeric" /></div>
+                            <div className="space-y-2"><Label className="text-xs text-efb-text-muted">Thời gian trận (phút)</Label><Input value={matchDuration} onChange={(e) => setMatchDuration(e.target.value.replace(/\D/g, ""))} className="h-10" inputMode="numeric" /></div>
                         </div>
                         <div className="flex gap-4">
                             <label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={extraTime} onChange={(e) => setExtraTime(e.target.checked)} className="rounded border-gray-300 text-efb-red focus:ring-efb-red" /><span className="text-sm text-efb-text-secondary">Hiệp phụ</span></label>
@@ -399,14 +595,14 @@ export default function TaoGiaiDauPage() {
                         </div>
                     </div>
 
-                    <div className="space-y-2"><Label className="text-sm font-medium">Nội quy giải đấu</Label><textarea value={rules} onChange={(e) => setRules(e.target.value)} placeholder="Nhập nội quy, quy định của giải đấu..." rows={5} className="w-full rounded-xl border border-gray-200 p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-efb-red/20 focus:border-efb-red transition-all" /></div>
+                    <div className="space-y-2"><Label className="text-sm font-medium">Nội quy giải đấu</Label><textarea value={rules} onChange={(e) => setRules(e.target.value)} placeholder="Nhập nội quy, quy định của giải đấu..." rows={5} className="w-full rounded border border-gray-200 p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-efb-red/20 focus:border-efb-red transition-all" /></div>
 
                     <div className="pt-4 border-t border-gray-100 space-y-3">
                         <Label className="text-sm font-semibold">Thông tin liên hệ BTC</Label>
                         <div className="grid grid-cols-2 gap-3">
-                            <div className="space-y-2"><Label className="text-xs text-efb-text-muted">Số điện thoại</Label><Input value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} placeholder="0xxx xxx xxx" className="h-10 rounded-xl text-sm" /></div>
-                            <div className="space-y-2"><Label className="text-xs text-efb-text-muted">Zalo</Label><Input value={contactZalo} onChange={(e) => setContactZalo(e.target.value)} placeholder="SĐT Zalo" className="h-10 rounded-xl text-sm" /></div>
-                            <div className="space-y-2 col-span-2"><Label className="text-xs text-efb-text-muted">Facebook</Label><Input value={contactFacebook} onChange={(e) => setContactFacebook(e.target.value)} placeholder="Link Facebook" className="h-10 rounded-xl text-sm" /></div>
+                            <div className="space-y-2"><Label className="text-xs text-efb-text-muted">Số điện thoại</Label><Input value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} placeholder="0xxx xxx xxx" className="h-10 text-sm" /></div>
+                            <div className="space-y-2"><Label className="text-xs text-efb-text-muted">Zalo</Label><Input value={contactZalo} onChange={(e) => setContactZalo(e.target.value)} placeholder="SĐT Zalo" className="h-10 text-sm" /></div>
+                            <div className="space-y-2 col-span-2"><Label className="text-xs text-efb-text-muted">Facebook</Label><Input value={contactFacebook} onChange={(e) => setContactFacebook(e.target.value)} placeholder="Link Facebook" className="h-10 text-sm" /></div>
                         </div>
                     </div>
                 </motion.div>

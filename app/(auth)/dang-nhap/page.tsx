@@ -38,7 +38,7 @@ export default function DangNhapPage() {
         finally { setIsSubmitting(false); }
     };
 
-    const inputCls = "pl-10 h-12 rounded-xl border-gray-200 bg-gray-50/50 focus:bg-white focus:border-efb-red focus:ring-efb-red/20 transition-all text-sm";
+    const inputCls = "pl-10 h-12 border-gray-200 bg-gray-50/50 focus:bg-white focus:border-efb-red focus:ring-efb-red/20 transition-all text-sm";
 
     return (
         <div className="min-h-screen flex">
@@ -69,7 +69,7 @@ export default function DangNhapPage() {
                             </div>
                             <div className="relative">
                                 <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-efb-text-muted" />
-                                <Input id="password" type={showPassword ? "text" : "password"} placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} className="pl-10 pr-10 h-12 rounded-xl border-gray-200 bg-gray-50/50 focus:bg-white focus:border-efb-red focus:ring-efb-red/20 transition-all text-sm" required disabled={isSubmitting} />
+                                <Input id="password" type={showPassword ? "text" : "password"} placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} className="pl-10 pr-10 h-12 border-gray-200 bg-gray-50/50 focus:bg-white focus:border-efb-red focus:ring-efb-red/20 transition-all text-sm" required disabled={isSubmitting} />
                                 <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-efb-text-muted hover:text-efb-text-secondary transition-colors">
                                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                                 </button>

@@ -432,16 +432,16 @@ export default function AdminSettingsPage() {
                                 <div className="grid sm:grid-cols-2 gap-5">
                                     <div className="space-y-2">
                                         <Label className="text-sm font-semibold text-gray-700">Tên website</Label>
-                                        <Input value={form.siteName} onChange={(e) => updateField("siteName", e.target.value)} className="h-11 rounded-xl" placeholder="6v6 Vietnam" />
+                                        <Input value={form.siteName} onChange={(e) => updateField("siteName", e.target.value)} className="h-11" placeholder="6v6 Vietnam" />
                                     </div>
                                     <div className="space-y-2">
                                         <Label className="text-sm font-semibold text-gray-700">URL website</Label>
-                                        <Input value={form.siteUrl} onChange={(e) => updateField("siteUrl", e.target.value)} className="h-11 rounded-xl" placeholder="https://example.com" />
+                                        <Input value={form.siteUrl} onChange={(e) => updateField("siteUrl", e.target.value)} className="h-11" placeholder="https://example.com" />
                                     </div>
                                 </div>
                                 <div className="space-y-2">
                                     <Label className="text-sm font-semibold text-gray-700">Tagline / Slogan</Label>
-                                    <Input value={form.siteTagline} onChange={(e) => updateField("siteTagline", e.target.value)} className="h-11 rounded-xl" placeholder="Nền tảng giải đấu 6v6 hàng đầu Việt Nam" />
+                                    <Input value={form.siteTagline} onChange={(e) => updateField("siteTagline", e.target.value)} className="h-11" placeholder="Nền tảng giải đấu 6v6 hàng đầu Việt Nam" />
                                 </div>
                                 <div className="space-y-2">
                                     <Label className="text-sm font-semibold text-gray-700">Mô tả website</Label>
@@ -455,7 +455,7 @@ export default function AdminSettingsPage() {
                                 </div>
                                 <div className="space-y-2">
                                     <Label className="text-sm font-semibold text-gray-700">Dòng bản quyền</Label>
-                                    <Input value={form.copyrightText} onChange={(e) => updateField("copyrightText", e.target.value)} className="h-11 rounded-xl" placeholder="© 2024 6v6 Vietnam. All rights reserved." />
+                                    <Input value={form.copyrightText} onChange={(e) => updateField("copyrightText", e.target.value)} className="h-11" placeholder="© 2024 6v6 Vietnam. All rights reserved." />
                                 </div>
                             </SettingsCard>
                         </motion.div>
@@ -529,7 +529,7 @@ export default function AdminSettingsPage() {
                             >
                                 <div className="space-y-2">
                                     <Label className="text-sm font-semibold text-gray-700">Meta Title mặc định</Label>
-                                    <Input value={form.seoTitle} onChange={(e) => updateField("seoTitle", e.target.value)} className="h-11 rounded-xl" placeholder="6v6 Cup VN - Tổ Chức Giải Đấu..." />
+                                    <Input value={form.seoTitle} onChange={(e) => updateField("seoTitle", e.target.value)} className="h-11" placeholder="6v6 Cup VN - Tổ Chức Giải Đấu..." />
                                     <p className="text-[11px] text-gray-400">{(form.seoTitle || "").length}/60 ký tự · Best: 50–60</p>
                                 </div>
                                 <div className="space-y-2">
@@ -587,11 +587,11 @@ export default function AdminSettingsPage() {
                                 <div className="grid sm:grid-cols-2 gap-5">
                                     <div className="space-y-2">
                                         <Label className="text-sm font-semibold text-gray-700">Google Site Verification</Label>
-                                        <Input value={form.googleSiteVerification} onChange={(e) => updateField("googleSiteVerification", e.target.value)} className="h-11 rounded-xl" placeholder="Mã xác minh Google..." />
+                                        <Input value={form.googleSiteVerification} onChange={(e) => updateField("googleSiteVerification", e.target.value)} className="h-11" placeholder="Mã xác minh Google..." />
                                     </div>
                                     <div className="space-y-2">
                                         <Label className="text-sm font-semibold text-gray-700">Bing Site Verification</Label>
-                                        <Input value={form.bingSiteVerification} onChange={(e) => updateField("bingSiteVerification", e.target.value)} className="h-11 rounded-xl" placeholder="Mã xác minh Bing..." />
+                                        <Input value={form.bingSiteVerification} onChange={(e) => updateField("bingSiteVerification", e.target.value)} className="h-11" placeholder="Mã xác minh Bing..." />
                                     </div>
                                 </div>
                                 <div className="space-y-2">
@@ -713,7 +713,7 @@ export default function AdminSettingsPage() {
                                         <Input
                                             value={form.smtpHost}
                                             onChange={(e) => updateField("smtpHost", e.target.value)}
-                                            className="h-11 rounded-xl font-mono"
+                                            className="h-11 font-mono"
                                             placeholder="smtp.gmail.com"
                                         />
                                         <p className="text-[11px] text-gray-400">Ví dụ: smtp.gmail.com, smtp.zoho.com, smtp.mail.yahoo.com</p>
@@ -724,7 +724,7 @@ export default function AdminSettingsPage() {
                                             type="number"
                                             value={form.smtpPort}
                                             onChange={(e) => updateField("smtpPort", parseInt(e.target.value) || 587)}
-                                            className="h-11 rounded-xl font-mono"
+                                            className="h-11 font-mono"
                                             placeholder="587"
                                         />
                                         <p className="text-[11px] text-gray-400">587 (TLS) hoặc 465 (SSL)</p>
@@ -746,7 +746,7 @@ export default function AdminSettingsPage() {
                                         <Input
                                             value={form.smtpUser}
                                             onChange={(e) => updateField("smtpUser", e.target.value)}
-                                            className="h-11 rounded-xl"
+                                            className="h-11"
                                             placeholder="your-email@gmail.com"
                                         />
                                     </div>
@@ -756,7 +756,7 @@ export default function AdminSettingsPage() {
                                             type="password"
                                             value={form.smtpPass}
                                             onChange={(e) => updateField("smtpPass", e.target.value)}
-                                            className="h-11 rounded-xl"
+                                            className="h-11"
                                             placeholder="App password..."
                                         />
                                         <p className="text-[11px] text-gray-400">Nếu dùng Gmail, tạo App Password trong Google Account</p>
@@ -776,7 +776,7 @@ export default function AdminSettingsPage() {
                                         <Input
                                             value={form.smtpFromName}
                                             onChange={(e) => updateField("smtpFromName", e.target.value)}
-                                            className="h-11 rounded-xl"
+                                            className="h-11"
                                             placeholder="6v6 Vietnam"
                                         />
                                     </div>
@@ -785,7 +785,7 @@ export default function AdminSettingsPage() {
                                         <Input
                                             value={form.smtpFromEmail}
                                             onChange={(e) => updateField("smtpFromEmail", e.target.value)}
-                                            className="h-11 rounded-xl"
+                                            className="h-11"
                                             placeholder="noreply@6v6.vn"
                                         />
                                         <p className="text-[11px] text-gray-400">Để trống sẽ dùng SMTP Username làm email gửi</p>
@@ -806,7 +806,7 @@ export default function AdminSettingsPage() {
                                             type="email"
                                             value={testEmailAddress}
                                             onChange={(e) => setTestEmailAddress(e.target.value)}
-                                            className="h-11 rounded-xl"
+                                            className="h-11"
                                             placeholder="your-email@gmail.com"
                                         />
                                     </div>
@@ -889,11 +889,11 @@ export default function AdminSettingsPage() {
                                 <div className="grid sm:grid-cols-2 gap-5">
                                     <div className="space-y-2">
                                         <Label className="text-sm font-semibold text-gray-700">Google Analytics ID (GA4)</Label>
-                                        <Input value={form.googleAnalyticsId} onChange={(e) => updateField("googleAnalyticsId", e.target.value)} className="h-11 rounded-xl font-mono" placeholder="G-XXXXXXXXXX" />
+                                        <Input value={form.googleAnalyticsId} onChange={(e) => updateField("googleAnalyticsId", e.target.value)} className="h-11 font-mono" placeholder="G-XXXXXXXXXX" />
                                     </div>
                                     <div className="space-y-2">
                                         <Label className="text-sm font-semibold text-gray-700">Facebook Pixel ID</Label>
-                                        <Input value={form.facebookPixelId} onChange={(e) => updateField("facebookPixelId", e.target.value)} className="h-11 rounded-xl font-mono" placeholder="123456789012345" />
+                                        <Input value={form.facebookPixelId} onChange={(e) => updateField("facebookPixelId", e.target.value)} className="h-11 font-mono" placeholder="123456789012345" />
                                     </div>
                                 </div>
                             </SettingsCard>

@@ -18,7 +18,7 @@ export default function AdminTournamentsPage() {
                 <div className="flex items-center gap-3 w-full sm:w-auto">
                     <div className="relative w-full sm:w-72">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                        <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Tìm giải đấu..." className="pl-9 h-10 rounded-xl" />
+                        <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Tìm giải đấu..." className="pl-9 h-10" />
                     </div>
                     <Button variant="outline" className="h-10 rounded-xl border-gray-200">
                         <Filter className="w-4 h-4 mr-2" /> Lọc

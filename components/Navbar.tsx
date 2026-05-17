@@ -5,10 +5,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import {
-    Menu, Trophy, Users, Newspaper, LogIn, LogOut, User, Settings,
-    LayoutDashboard, Gamepad2, ChevronDown, Shield, Bell,
-    Calendar,
-    Settings as SettingsIcon
+    Menu, Trophy, Users, Newspaper, LogIn, LogOut, User,
+    LayoutDashboard, Gamepad2, ChevronDown, Shield, Bell, Calendar
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -33,8 +31,10 @@ const navLinks = [
 export function Navbar() {
     const [scrolled, setScrolled] = useState(false);
     const [mobileOpen, setMobileOpen] = useState(false);
-
-    const { user, isAuthenticated, isLoading, logout } = useAuth();
+    const { user, isAuthenticated, isLoading, logout, token } = useAuth();
+    const [notifications, setNotifications] = useState<any[]>([]);
+    const [unreadCount, setUnreadCount] = useState(0);
+    const [isNotifOpen, setIsNotifOpen] = useState(false);
 
     useEffect(() => {
         const handleScroll = () => setScrolled(window.scrollY > 10);
@@ -42,14 +42,39 @@ export function Navbar() {
         return () => window.removeEventListener("scroll", handleScroll);
     }, []);
 
-    const getInitials = (name: string) => {
-        return name
-            .split(" ")
-            .map((n) => n[0])
-            .join("")
-            .toUpperCase()
-            .slice(0, 2);
+    useEffect(() => {
+        if (isAuthenticated && token) {
+            fetchNotifications();
+            const interval = setInterval(fetchNotifications, 120000);
+            return () => clearInterval(interval);
+        }
+    }, [isAuthenticated, token]);
+
+    const fetchNotifications = async () => {
+        try {
+            const res = await fetch("/api/notifications", {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            const data = await res.json();
+            if (data.success) {
+                setNotifications(data.data.notifications);
+                setUnreadCount(data.data.unreadCount);
+            }
+        } catch { /* silent */ }
     };
+
+    const markAllAsRead = async () => {
+        try {
+            await fetch("/api/notifications", {
+                method: "PUT",
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setUnreadCount(0);
+            setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+        } catch { /* silent */ }
+    };
+
+    const getInitials = (name: string) => name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
 
     return (
         <motion.header
@@ -98,13 +123,73 @@ export function Navbar() {
                         ) : isAuthenticated && user ? (
                             <>
                                 {/* Notification Bell */}
-                                <button className="relative w-9 h-9 flex items-center justify-center rounded-lg hover:bg-gray-50 transition-colors group">
-                                    <Bell className="w-5 h-5 text-gray-400 group-hover:scale-110 transition-transform" />
-                                    <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full border-2 border-white">
-                                        3
-                                    </span>
-                                </button>
+                                <DropdownMenu open={isNotifOpen} onOpenChange={setIsNotifOpen}>
+                                    <DropdownMenuTrigger asChild>
+                                        <button className="relative w-9 h-9 flex items-center justify-center rounded-lg hover:bg-gray-50 transition-colors group">
+                                            <Bell className={`w-5 h-5 ${unreadCount > 0 ? 'text-efb-red' : 'text-gray-400'} group-hover:scale-110 transition-transform`} />
+                                            {unreadCount > 0 && (
+                                                <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full border-2 border-white">
+                                                    {unreadCount > 9 ? '9+' : unreadCount}
+                                                </span>
+                                            )}
+                                        </button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end" className="w-80 p-0 rounded-xl shadow-xl border border-gray-100 overflow-hidden">
+                                        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-50 bg-gray-50/50">
+                                            <h3 className="text-sm font-bold text-gray-900">Thông báo</h3>
+                                            {unreadCount > 0 && (
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); markAllAsRead(); }}
+                                                    className="text-[10px] font-bold text-efb-red hover:underline uppercase tracking-tight"
+                                                >
+                                                    Đọc tất cả
+                                                </button>
+                                            )}
+                                        </div>
+                                        <div className="max-h-[360px] overflow-y-auto">
+                                            {notifications.length === 0 ? (
+                                                <div className="px-4 py-8 text-center">
+                                                    <Bell className="w-8 h-8 text-gray-100 mx-auto mb-2" />
+                                                    <p className="text-xs text-gray-400">Không có thông báo mới</p>
+                                                </div>
+                                            ) : (
+                                                notifications.map((notif) => (
+                                                    <DropdownMenuItem
+                                                        key={notif._id}
+                                                        asChild
+                                                        className={`p-0 focus:bg-transparent cursor-default border-b border-gray-50 last:border-0 ${!notif.isRead ? 'bg-red-50/40' : ''}`}
+                                                    >
+                                                        <Link
+                                                            href={notif.link || '#'}
+                                                            className="flex gap-3 px-4 py-3 hover:bg-gray-50 transition-colors"
+                                                            onClick={() => setIsNotifOpen(false)}
+                                                        >
+                                                            <div className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center ${notif.type === 'registration' ? 'bg-amber-100 text-amber-600' :
+                                                                notif.type === 'tournament' ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-600'
+                                                                }`}>
+                                                                {notif.type === 'registration' ? <Users className="w-4 h-4" /> :
+                                                                    notif.type === 'tournament' ? <Trophy className="w-4 h-4" /> : <Bell className="w-4 h-4" />}
+                                                            </div>
+                                                            <div className="flex-1 min-w-0">
+                                                                <p className="text-[13px] font-bold text-gray-900 leading-tight mb-0.5">{notif.title}</p>
+                                                                <p className="text-[11px] text-gray-500 line-clamp-2 leading-relaxed">{notif.message}</p>
+                                                                <p className="text-[10px] text-gray-400 mt-1.5 flex items-center gap-1 font-medium">
+                                                                    <Calendar className="w-2.5 h-2.5" />
+                                                                    {new Date(notif.createdAt).toLocaleDateString('vi-VN')}
+                                                                </p>
+                                                            </div>
+                                                            {!notif.isRead && (
+                                                                <div className="w-2 h-2 rounded-full bg-efb-red mt-1.5 flex-shrink-0" />
+                                                            )}
+                                                        </Link>
+                                                    </DropdownMenuItem>
+                                                ))
+                                            )}
+                                        </div>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
 
+                                {/* User menu */}
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                         <button className="flex items-center gap-2 pl-1 pr-2 py-1 rounded-full hover:bg-gray-50 transition-colors duration-200 outline-none focus:ring-2 focus:ring-efb-red/20 focus:ring-offset-1">
@@ -180,165 +265,142 @@ export function Navbar() {
                             </>
                         ) : (
                             <>
-                                <Button
-                                    variant="ghost"
-                                    className="text-efb-text-secondary hover:text-efb-red text-sm font-medium h-9 px-4"
-                                    asChild
-                                >
-                                    <Link href="/dang-nhap">
-                                        <LogIn className="w-4 h-4 mr-1.5" />
-                                        Đăng nhập
-                                    </Link>
+                                <Button variant="ghost" className="text-efb-text-secondary hover:text-efb-red text-sm font-medium h-9 px-4" asChild>
+                                    <Link href="/dang-nhap"><LogIn className="w-4 h-4 mr-1.5" />Đăng nhập</Link>
                                 </Button>
-                                <Button
-                                    className="bg-efb-red text-white hover:bg-efb-red-light font-semibold text-sm h-9 px-5 rounded-lg shadow-sm hover:shadow-md transition-all duration-200"
-                                    asChild
-                                >
-                                    <Link href="/dang-ky">
-                                        Đăng ký
-                                    </Link>
+                                <Button className="bg-efb-red text-white hover:bg-efb-red-light font-semibold text-sm h-9 px-5 rounded-lg shadow-sm hover:shadow-md transition-all duration-200" asChild>
+                                    <Link href="/dang-ky">Đăng ký</Link>
                                 </Button>
                             </>
                         )}
                     </div>
 
-                    {/* Mobile Menu */}
-                    <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-                        <SheetTrigger asChild className="lg:hidden">
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="text-efb-text hover:bg-efb-red/[0.05]"
-                            >
-                                <Menu className="w-5 h-5" />
-                            </Button>
-                        </SheetTrigger>
-                        <SheetContent
-                            side="right"
-                            className="w-full sm:w-[360px] bg-white border-l border-efb-border p-0"
-                        >
-                            <div className="flex flex-col h-full">
-                                {/* Mobile header */}
-                                <div className="flex items-center p-5 border-b border-efb-border">
-                                    <Image
-                                        src="/images/logo/logo_6v6_remove_bg.png"
-                                        alt="6v6 Vietnam Official"
-                                        width={140}
-                                        height={40}
-                                        className="h-9 w-auto object-contain cursor-pointer"
-                                    />
-                                </div>
-
-                                {/* Mobile user info (if logged in) */}
-                                {isAuthenticated && user && (
-                                    <div className="px-5 py-4 border-b border-efb-border bg-gray-50/50">
-                                        <div className="flex items-center gap-3">
-                                            <Avatar className="w-11 h-11 border-2 border-efb-red/20">
-                                                <AvatarImage src={user.avatar || ""} alt={user.name} />
-                                                <AvatarFallback className="bg-efb-red text-white text-sm font-bold">
-                                                    {getInitials(user.name)}
-                                                </AvatarFallback>
-                                            </Avatar>
-                                            <div className="flex-1 min-w-0">
-                                                <p className="text-sm font-semibold text-gray-900 truncate">{user.name}</p>
-                                                <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                    {/* Mobile */}
+                    <div className="flex lg:hidden items-center gap-1">
+                        {isAuthenticated && user && (
+                            <DropdownMenu open={isNotifOpen} onOpenChange={setIsNotifOpen}>
+                                <DropdownMenuTrigger asChild>
+                                    <button className="relative w-9 h-9 flex items-center justify-center rounded-lg hover:bg-gray-50 transition-colors">
+                                        <Bell className={`w-5 h-5 ${unreadCount > 0 ? 'text-efb-red' : 'text-gray-400'}`} />
+                                        {unreadCount > 0 && (
+                                            <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full border-2 border-white">
+                                                {unreadCount > 9 ? '9+' : unreadCount}
+                                            </span>
+                                        )}
+                                    </button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-[calc(100vw-2rem)] max-w-80 p-0 rounded-xl shadow-xl border border-gray-100 overflow-hidden">
+                                    <div className="flex items-center justify-between px-4 py-3 border-b border-gray-50 bg-gray-50/50">
+                                        <h3 className="text-sm font-bold text-gray-900">Thông báo</h3>
+                                        {unreadCount > 0 && (
+                                            <button onClick={(e) => { e.stopPropagation(); markAllAsRead(); }} className="text-[10px] font-bold text-efb-red hover:underline uppercase">Đọc tất cả</button>
+                                        )}
+                                    </div>
+                                    <div className="max-h-[300px] overflow-y-auto">
+                                        {notifications.length === 0 ? (
+                                            <div className="px-4 py-6 text-center">
+                                                <Bell className="w-7 h-7 text-gray-100 mx-auto mb-2" />
+                                                <p className="text-xs text-gray-400">Không có thông báo</p>
+                                            </div>
+                                        ) : notifications.map((notif) => (
+                                            <Link key={notif._id} href={notif.link || '#'} onClick={() => setIsNotifOpen(false)}
+                                                className={`flex gap-3 px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-50 last:border-0 ${!notif.isRead ? 'bg-red-50/40' : ''}`}
+                                            >
+                                                <div className={`w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center ${notif.type === 'registration' ? 'bg-amber-100 text-amber-600' : 'bg-gray-100 text-gray-600'}`}>
+                                                    {notif.type === 'registration' ? <Users className="w-3.5 h-3.5" /> : <Bell className="w-3.5 h-3.5" />}
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-xs font-bold text-gray-900 leading-tight">{notif.title}</p>
+                                                    <p className="text-[11px] text-gray-500 line-clamp-1">{notif.message}</p>
+                                                </div>
+                                                {!notif.isRead && <div className="w-2 h-2 rounded-full bg-efb-red mt-1 flex-shrink-0" />}
+                                            </Link>
+                                        ))}
+                                    </div>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        )}
+                        <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+                            <SheetTrigger asChild>
+                                <Button variant="ghost" size="icon" className="text-efb-text hover:bg-efb-red/[0.05]">
+                                    <Menu className="w-5 h-5" />
+                                </Button>
+                            </SheetTrigger>
+                            <SheetContent side="right" className="w-full sm:w-[360px] bg-white border-l border-efb-border p-0">
+                                <div className="flex flex-col h-full">
+                                    <div className="flex items-center p-5 border-b border-efb-border">
+                                        <Image src="/images/logo/logo_6v6_remove_bg.png" alt="6v6" width={140} height={40} className="h-9 w-auto object-contain" />
+                                    </div>
+                                    {isAuthenticated && user && (
+                                        <div className="px-5 py-4 border-b border-efb-border bg-gray-50/50">
+                                            <div className="flex items-center gap-3">
+                                                <Avatar className="w-11 h-11 border-2 border-efb-red/20">
+                                                    <AvatarImage src={user.avatar || ""} alt={user.name} />
+                                                    <AvatarFallback className="bg-efb-red text-white text-sm font-bold">{getInitials(user.name)}</AvatarFallback>
+                                                </Avatar>
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-sm font-semibold text-gray-900 truncate">{user.name}</p>
+                                                    <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                )}
-
-                                {/* Mobile nav links */}
-                                <div className="flex-1 py-3 px-3">
-                                    {navLinks.map((link, i) => (
-                                        <motion.div
-                                            key={link.href}
-                                            initial={{ opacity: 0, x: 16 }}
-                                            animate={{ opacity: 1, x: 0 }}
-                                            transition={{ delay: i * 0.08 }}
-                                        >
-                                            <Link
-                                                href={link.href}
-                                                onClick={() => setMobileOpen(false)}
-                                                className="flex items-center gap-3.5 px-4 py-3.5 rounded-xl text-efb-text hover:bg-efb-bg-alt transition-colors duration-150"
-                                            >
-                                                <link.icon className="w-[18px] h-[18px] text-efb-red" />
-                                                <span className="text-[15px] font-medium">{link.label}</span>
-                                            </Link>
-                                        </motion.div>
-                                    ))}
-                                    {isAuthenticated && user && (user.role === "manager" || user.role === "admin") && (
-                                        <motion.div
-                                            initial={{ opacity: 0, x: 16 }}
-                                            animate={{ opacity: 1, x: 0 }}
-                                            transition={{ delay: navLinks.length * 0.08 }}
-                                        >
-                                            <Link
-                                                href="/manager"
-                                                onClick={() => setMobileOpen(false)}
-                                                className="flex items-center gap-3.5 px-4 py-3.5 rounded-xl text-amber-600 hover:bg-amber-50 transition-colors duration-150"
-                                            >
+                                    )}
+                                    <div className="flex-1 py-3 px-3">
+                                        {navLinks.map((link, i) => (
+                                            <motion.div key={link.href} initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.08 }}>
+                                                <Link href={link.href} onClick={() => setMobileOpen(false)}
+                                                    className="flex items-center gap-3.5 px-4 py-3.5 rounded-xl text-efb-text hover:bg-efb-bg-alt transition-colors duration-150">
+                                                    <link.icon className="w-[18px] h-[18px] text-efb-red" />
+                                                    <span className="text-[15px] font-medium">{link.label}</span>
+                                                </Link>
+                                            </motion.div>
+                                        ))}
+                                        {isAuthenticated && user && (
+                                            <>
+                                                <div className="h-px bg-gray-100 my-2 mx-4" />
+                                                <Link href="/trang-ca-nhan" onClick={() => setMobileOpen(false)}
+                                                    className="flex items-center gap-3.5 px-4 py-3.5 rounded-xl text-efb-text hover:bg-efb-bg-alt transition-colors duration-150">
+                                                    <User className="w-[18px] h-[18px] text-efb-red" />
+                                                    <span className="text-[15px] font-medium">Trang cá nhân</span>
+                                                </Link>
+                                            </>
+                                        )}
+                                        {isAuthenticated && user && (user.role === "manager" || user.role === "admin") && (
+                                            <Link href="/manager" onClick={() => setMobileOpen(false)}
+                                                className="flex items-center gap-3.5 px-4 py-3.5 rounded-xl text-amber-600 hover:bg-amber-50 transition-colors duration-150">
                                                 <LayoutDashboard className="w-[18px] h-[18px]" />
                                                 <span className="text-[15px] font-medium">Manager Dashboard</span>
                                             </Link>
-                                        </motion.div>
-                                    )}
-                                    {isAuthenticated && user && user.role === "admin" && (
-                                        <motion.div
-                                            initial={{ opacity: 0, x: 16 }}
-                                            animate={{ opacity: 1, x: 0 }}
-                                            transition={{ delay: (navLinks.length + 1) * 0.08 }}
-                                        >
-                                            <Link
-                                                href="/admin"
-                                                onClick={() => setMobileOpen(false)}
-                                                className="flex items-center gap-3.5 px-4 py-3.5 rounded-xl text-amber-600 hover:bg-amber-50 transition-colors duration-150"
-                                            >
+                                        )}
+                                        {isAuthenticated && user && user.role === "admin" && (
+                                            <Link href="/admin" onClick={() => setMobileOpen(false)}
+                                                className="flex items-center gap-3.5 px-4 py-3.5 rounded-xl text-amber-600 hover:bg-amber-50 transition-colors duration-150">
                                                 <Shield className="w-[18px] h-[18px]" />
                                                 <span className="text-[15px] font-medium">Admin Dashboard</span>
                                             </Link>
-                                        </motion.div>
-                                    )}
-                                </div>
-
-                                {/* Mobile footer */}
-                                <div className="p-5 space-y-2.5 border-t border-efb-border">
-                                    {isAuthenticated && user ? (
-                                        <Button
-                                            variant="outline"
-                                            onClick={() => {
-                                                logout();
-                                                setMobileOpen(false);
-                                            }}
-                                            className="w-full h-11 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 font-medium rounded-xl"
-                                        >
-                                            <LogOut className="w-4 h-4 mr-2" />
-                                            Đăng xuất
-                                        </Button>
-                                    ) : (
-                                        <>
-                                            <Button
-                                                variant="outline"
-                                                className="w-full h-11 border-efb-border text-efb-text font-medium rounded-xl"
-                                                asChild
-                                            >
-                                                <Link href="/dang-nhap" onClick={() => setMobileOpen(false)}>
-                                                    Đăng nhập
-                                                </Link>
+                                        )}
+                                    </div>
+                                    <div className="p-5 space-y-2.5 border-t border-efb-border">
+                                        {isAuthenticated && user ? (
+                                            <Button variant="outline" onClick={() => { logout(); setMobileOpen(false); }}
+                                                className="w-full h-11 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 font-medium rounded-xl">
+                                                <LogOut className="w-4 h-4 mr-2" />Đăng xuất
                                             </Button>
-                                            <Button
-                                                className="w-full h-11 bg-efb-red text-white hover:bg-efb-red-light font-semibold rounded-xl"
-                                                asChild
-                                            >
-                                                <Link href="/dang-ky" onClick={() => setMobileOpen(false)}>
-                                                    Đăng ký
-                                                </Link>
-                                            </Button>
-                                        </>
-                                    )}
+                                        ) : (
+                                            <>
+                                                <Button variant="outline" className="w-full h-11 border-efb-border text-efb-text font-medium rounded-xl" asChild>
+                                                    <Link href="/dang-nhap" onClick={() => setMobileOpen(false)}>Đăng nhập</Link>
+                                                </Button>
+                                                <Button className="w-full h-11 bg-efb-red text-white hover:bg-efb-red-light font-semibold rounded-xl" asChild>
+                                                    <Link href="/dang-ky" onClick={() => setMobileOpen(false)}>Đăng ký</Link>
+                                                </Button>
+                                            </>
+                                        )}
+                                    </div>
                                 </div>
-                            </div>
-                        </SheetContent>
-                    </Sheet>
+                            </SheetContent>
+                        </Sheet>
+                    </div>
                 </nav>
             </div>
         </motion.header>

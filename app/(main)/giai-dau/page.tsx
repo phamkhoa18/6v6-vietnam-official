@@ -7,7 +7,7 @@ import { motion } from "framer-motion";
 import {
     Trophy, Users, Calendar, Search, Flame, Clock,
     CheckCircle2, ChevronLeft, ChevronRight, ArrowUpDown,
-    Loader2, Ban, MapPin, User, Shield, Swords
+    Loader2, Ban, MapPin, User, Shield, Swords, Globe
 } from "lucide-react";
 import { GAME_MODE_INFO, TOURNAMENT_FORMATS, type GameMode } from "@/lib/ranking-points";
 
@@ -155,24 +155,30 @@ function TournamentListContent() {
                 <div className="max-w-[1200px] mx-auto px-6 lg:px-8">
                     {/* Filters */}
                     <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col gap-4 mb-8 -mt-6 relative z-10">
-                        {/* Search + Status */}
-                        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                            <div className="relative flex-1 max-w-md">
-                                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                                <input
-                                    type="text"
-                                    placeholder="Tìm kiếm giải đấu..."
-                                    value={searchInput}
-                                    onChange={(e) => setSearchInput(e.target.value)}
-                                    className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-efb-red/20 focus:border-efb-red transition-all"
-                                />
-                            </div>
-                            <div className="flex bg-gray-100 rounded-xl p-1">
+                        {/* Search Bar — full width on all screens */}
+                        <div className="relative">
+                            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                            <input
+                                type="text"
+                                placeholder="Tìm kiếm giải đấu..."
+                                value={searchInput}
+                                onChange={(e) => setSearchInput(e.target.value)}
+                                className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-efb-red/20 focus:border-efb-red transition-all shadow-sm"
+                            />
+                        </div>
+
+                        {/* Status Tabs — horizontal scroll on mobile, no scrollbar */}
+                        <div className="overflow-x-auto -mx-6 px-6 lg:mx-0 lg:px-0" style={{ scrollbarWidth: "none", msOverflowStyle: "none", WebkitOverflowScrolling: "touch" }}>
+                            <style>{`.scrollbar-hide::-webkit-scrollbar { display: none; }`}</style>
+                            <div className="inline-flex bg-gray-100 rounded-xl p-1 min-w-max scrollbar-hide">
                                 {filterTabs.map((tab) => (
                                     <button
                                         key={tab.key}
                                         onClick={() => updateURL({ status: tab.key })}
-                                        className={`px-4 py-1.5 text-xs font-medium rounded-lg transition-all ${urlStatus === tab.key ? "bg-white text-efb-red shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
+                                        className={`px-4 py-2 text-xs font-semibold rounded-lg transition-all whitespace-nowrap ${urlStatus === tab.key
+                                            ? "bg-white text-efb-red shadow-sm"
+                                            : "text-gray-500 hover:text-gray-700"
+                                            }`}
                                     >
                                         {tab.label}
                                     </button>
@@ -180,22 +186,24 @@ function TournamentListContent() {
                             </div>
                         </div>
 
-                        {/* Mode filter */}
-                        <div className="flex items-center gap-3">
-                            <span className="text-xs text-gray-400 font-medium">Chế độ:</span>
-                            <div className="flex gap-1.5">
-                                {modeFilters.map((m) => (
-                                    <button
-                                        key={m.key}
-                                        onClick={() => updateURL({ mode: m.key })}
-                                        className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${urlMode === m.key
-                                            ? "bg-efb-red text-white shadow-sm"
-                                            : "bg-gray-100 text-gray-500 hover:bg-gray-200"
-                                            }`}
-                                    >
-                                        {m.label}
-                                    </button>
-                                ))}
+                        {/* Mode filter — horizontal scroll on mobile */}
+                        <div className="flex items-center gap-2.5">
+                            <span className="text-xs text-gray-400 font-medium flex-shrink-0">Chế độ:</span>
+                            <div className="overflow-x-auto" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
+                                <div className="flex gap-1.5 min-w-max">
+                                    {modeFilters.map((m) => (
+                                        <button
+                                            key={m.key}
+                                            onClick={() => updateURL({ mode: m.key })}
+                                            className={`px-3.5 py-2 text-xs font-semibold rounded-lg transition-all whitespace-nowrap ${urlMode === m.key
+                                                ? "bg-efb-red text-white shadow-sm"
+                                                : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                                                }`}
+                                        >
+                                            {m.label}
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
                         </div>
                     </motion.div>
@@ -249,8 +257,11 @@ function TournamentListContent() {
                                                 </div>
                                             </div>
                                             <div className="p-5">
-                                                <h3 className="font-bold mb-3 group-hover:text-efb-red transition-colors line-clamp-2">{t.title}</h3>
-                                                <div className="space-y-2 text-sm text-gray-500">
+                                                <h3 className="font-bold mb-1 group-hover:text-efb-red transition-colors line-clamp-2">{t.title}</h3>
+                                                {t.createdBy?.name && (
+                                                    <p className="text-[11px] text-gray-400 mb-3">BTC: {t.createdBy.name}</p>
+                                                )}
+                                                <div className="space-y-1.5 text-sm text-gray-500">
                                                     <div className="flex justify-between">
                                                         <span>Thể thức</span>
                                                         <span className="font-medium text-gray-700">{TOURNAMENT_FORMATS[t.format as keyof typeof TOURNAMENT_FORMATS] || t.format}</span>
@@ -263,15 +274,15 @@ function TournamentListContent() {
                                                         <span>Giải thưởng</span>
                                                         <span className="font-bold text-efb-gold">{t.prize?.total || "Đang cập nhật"}</span>
                                                     </div>
-                                                    {t.schedule?.tournamentStart && (
-                                                        <div className="flex items-center gap-1.5 pt-2 border-t border-dashed border-gray-100 text-xs text-gray-400">
-                                                            <Calendar className="w-3 h-3" />
-                                                            {formatDate(t.schedule.tournamentStart)}
-                                                            {t.location && (
-                                                                <><span className="mx-1">•</span><MapPin className="w-3 h-3" />{t.location}</>
-                                                            )}
-                                                        </div>
-                                                    )}
+                                                </div>
+                                                <div className="flex items-center gap-1.5 pt-2.5 mt-2.5 border-t border-dashed border-gray-100 text-xs text-gray-400">
+                                                    <Calendar className="w-3 h-3 flex-shrink-0" />
+                                                    <span>{t.schedule?.tournamentStart ? formatDate(t.schedule.tournamentStart) : formatDate(t.createdAt)}</span>
+                                                    {t.location ? (
+                                                        <><span className="mx-0.5">•</span><MapPin className="w-3 h-3 flex-shrink-0" /><span className="truncate">{t.location}</span></>
+                                                    ) : t.isOnline ? (
+                                                        <><span className="mx-0.5">•</span><Globe className="w-3 h-3 flex-shrink-0" /><span>Online</span></>
+                                                    ) : null}
                                                 </div>
                                             </div>
                                         </Link>

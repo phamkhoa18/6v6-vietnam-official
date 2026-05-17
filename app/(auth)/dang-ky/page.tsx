@@ -47,7 +47,7 @@ export default function DangKyPage() {
         finally { setIsSubmitting(false); }
     };
 
-    const inputCls = "pl-10 h-11 rounded-xl border-gray-200 bg-gray-50/50 focus:bg-white focus:border-efb-red focus:ring-efb-red/20 transition-all text-sm";
+    const inputCls = "pl-10 h-11 border-gray-200 bg-gray-50/50 focus:bg-white focus:border-efb-red focus:ring-efb-red/20 transition-all text-sm";
 
     return (
         <div className="min-h-screen flex">
@@ -108,11 +108,11 @@ export default function DangKyPage() {
                                     <div className="grid grid-cols-2 gap-3">
                                         <div className="space-y-1.5">
                                             <Label htmlFor="teamName" className="text-[13px] font-medium text-efb-dark flex items-center gap-1">Team <span className="text-[10px] text-gray-400">(tùy chọn)</span></Label>
-                                            <div className="relative"><Shield className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-efb-text-muted" /><Input id="teamName" placeholder="FC Saigon" value={form.teamName} onChange={(e) => updateField("teamName", e.target.value)} className="pl-9 h-11 rounded-xl border-gray-200 bg-gray-50/50 focus:bg-white focus:border-efb-red focus:ring-efb-red/20 transition-all text-sm" maxLength={100} /></div>
+                                            <div className="relative"><Shield className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-efb-text-muted" /><Input id="teamName" placeholder="FC Saigon" value={form.teamName} onChange={(e) => updateField("teamName", e.target.value)} className="pl-9 h-11 border-gray-200 bg-gray-50/50 focus:bg-white focus:border-efb-red focus:ring-efb-red/20 transition-all text-sm" maxLength={100} /></div>
                                         </div>
                                         <div className="space-y-1.5">
                                             <Label htmlFor="phone" className="text-[13px] font-medium text-efb-dark">SĐT *</Label>
-                                            <div className="relative"><Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-efb-text-muted" /><Input id="phone" type="tel" placeholder="0912 345 678" value={form.phone} onChange={(e) => updateField("phone", e.target.value)} className="pl-9 h-11 rounded-xl border-gray-200 bg-gray-50/50 focus:bg-white focus:border-efb-red focus:ring-efb-red/20 transition-all text-sm" required /></div>
+                                            <div className="relative"><Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-efb-text-muted" /><Input id="phone" type="tel" placeholder="0912 345 678" value={form.phone} onChange={(e) => updateField("phone", e.target.value)} className="pl-9 h-11 border-gray-200 bg-gray-50/50 focus:bg-white focus:border-efb-red focus:ring-efb-red/20 transition-all text-sm" required /></div>
                                         </div>
                                     </div>
                                     <div className="space-y-1.5">
@@ -135,11 +135,11 @@ export default function DangKyPage() {
                                     </div>
                                     <div className="space-y-1.5">
                                         <Label htmlFor="password" className="text-[13px] font-medium text-efb-dark">Mật khẩu *</Label>
-                                        <div className="relative"><Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-efb-text-muted" /><Input id="password" type={showPassword ? "text" : "password"} placeholder="Tối thiểu 8 ký tự" value={form.password} onChange={(e) => updateField("password", e.target.value)} className="pl-10 pr-10 h-11 rounded-xl border-gray-200 bg-gray-50/50 focus:bg-white focus:border-efb-red focus:ring-efb-red/20 transition-all text-sm" required disabled={isSubmitting} /><button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-efb-text-muted hover:text-efb-text-secondary transition-colors">{showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}</button></div>
+                                        <div className="relative"><Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-efb-text-muted" /><Input id="password" type={showPassword ? "text" : "password"} placeholder="Tối thiểu 8 ký tự" value={form.password} onChange={(e) => updateField("password", e.target.value)} className="pl-10 pr-10 h-11 border-gray-200 bg-gray-50/50 focus:bg-white focus:border-efb-red focus:ring-efb-red/20 transition-all text-sm" required disabled={isSubmitting} /><button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-efb-text-muted hover:text-efb-text-secondary transition-colors">{showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}</button></div>
                                     </div>
                                     <div className="space-y-1.5">
                                         <Label htmlFor="confirmPassword" className="text-[13px] font-medium text-efb-dark">Xác nhận mật khẩu *</Label>
-                                        <div className="relative"><Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-efb-text-muted" /><Input id="confirmPassword" type={showConfirm ? "text" : "password"} placeholder="Nhập lại mật khẩu" value={form.confirmPassword} onChange={(e) => updateField("confirmPassword", e.target.value)} className="pl-10 pr-10 h-11 rounded-xl border-gray-200 bg-gray-50/50 focus:bg-white focus:border-efb-red focus:ring-efb-red/20 transition-all text-sm" required disabled={isSubmitting} /><button type="button" onClick={() => setShowConfirm(!showConfirm)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-efb-text-muted hover:text-efb-text-secondary transition-colors">{showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}</button></div>
+                                        <div className="relative"><Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-efb-text-muted" /><Input id="confirmPassword" type={showConfirm ? "text" : "password"} placeholder="Nhập lại mật khẩu" value={form.confirmPassword} onChange={(e) => updateField("confirmPassword", e.target.value)} className="pl-10 pr-10 h-11 border-gray-200 bg-gray-50/50 focus:bg-white focus:border-efb-red focus:ring-efb-red/20 transition-all text-sm" required disabled={isSubmitting} /><button type="button" onClick={() => setShowConfirm(!showConfirm)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-efb-text-muted hover:text-efb-text-secondary transition-colors">{showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}</button></div>
                                     </div>
                                     <div className="flex items-start gap-2.5 pt-1">
                                         <Checkbox id="terms" className="mt-0.5 border-gray-300 data-[state=checked]:bg-efb-red data-[state=checked]:border-efb-red" required />

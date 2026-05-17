@@ -103,7 +103,14 @@ export const uploadImage = async (file: File, type: string = "general") => {
 
 export const tournamentAPI = {
     create: (data: any) => fetchAPI("/tournaments", { method: "POST", body: JSON.stringify(data) }),
-    // To be expanded
+    getById: (id: string) => fetchAPI(`/tournaments/${id}`),
+    getMyTournaments: (params?: Record<string, string>) => {
+        const searchParams = new URLSearchParams(params || {});
+        return fetchAPI(`/manager/tournaments?${searchParams.toString()}`);
+    },
+    update: (id: string, data: any) => fetchAPI(`/tournaments/${id}`, { method: "PUT", body: JSON.stringify(data) }),
+    delete: (id: string) => fetchAPI(`/tournaments/${id}`, { method: "DELETE" }),
+    updateStatus: (id: string, status: string) => fetchAPI(`/tournaments/${id}`, { method: "PUT", body: JSON.stringify({ status }) }),
 };
 
 // ====== Payment Config ======

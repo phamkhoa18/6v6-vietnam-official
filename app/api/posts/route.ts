@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import dbConnect from "@/lib/mongodb";
 import Post from "@/models/Post";
+import User from "@/models/User";
 
 // GET /api/posts — List posts
 export async function GET(req: NextRequest) {

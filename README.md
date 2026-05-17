@@ -1,292 +1,133 @@
-# 6v6 Vietnam Official
+<div align="center">
+  <img src="./public/images/logo/logo_6v6_remove_bg.png" alt="6v6 Vietnam Official Logo" width="250" />
 
-> Nền tảng quản lý giải đấu bóng đá sân 6 người hàng đầu Việt Nam.
+  # 🏆 6v6 Vietnam Official - Tournament Platform
 
-![Next.js](https://img.shields.io/badge/Next.js-15-black?logo=next.js)
-![MongoDB](https://img.shields.io/badge/MongoDB-8-47A248?logo=mongodb&logoColor=white)
-![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)
-![TailwindCSS](https://img.shields.io/badge/TailwindCSS-4-06B6D4?logo=tailwindcss&logoColor=white)
-![License](https://img.shields.io/badge/license-Private-red)
+  **Nền tảng Quản lý Giải đấu Thể thao Điện tử (eSports) Chuyên nghiệp**
 
----
-
-## Mục lục
-
-- [Tổng quan](#tổng-quan)
-- [Tính năng](#tính-năng)
-- [Tech Stack](#tech-stack)
-- [Cấu trúc dự án](#cấu-trúc-dự-án)
-- [Cài đặt](#cài-đặt)
-- [Biến môi trường](#biến-môi-trường)
-- [Scripts](#scripts)
-- [API Endpoints](#api-endpoints)
-- [Đóng góp](#đóng-góp)
+  ![Next.js](https://img.shields.io/badge/Next.js-16+-black?style=for-the-badge&logo=next.js)
+  ![React](https://img.shields.io/badge/React-19-blue?style=for-the-badge&logo=react)
+  ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-v4-38B2AC?style=for-the-badge&logo=tailwind-css)
+  ![MongoDB](https://img.shields.io/badge/MongoDB-Mongoose-47A248?style=for-the-badge&logo=mongodb)
+</div>
 
 ---
 
-## Tổng quan
+## 📖 Tổng quan Hệ thống (System Overview)
 
-**6v6 Vietnam** là nền tảng web fullstack phục vụ cộng đồng bóng đá sân 6 tại Việt Nam. Hệ thống hỗ trợ tổ chức giải đấu, quản lý đội bóng, bảng xếp hạng, tin tức, và quản trị nội dung — tất cả trong một giao diện hiện đại, tối ưu SEO.
-
----
-
-## Tính năng
-
-### 🏟️ Giải đấu
-- Tạo & quản lý giải đấu (Admin + Manager)
-- Đăng ký đội tham gia
-- Lịch thi đấu & kết quả trận đấu
-- Bảng xếp hạng theo giải
-
-### 📰 Tin tức & Nội dung
-- Trình soạn thảo Rich Text (Tiptap Editor)
-- Quản lý bài viết: tạo, sửa, xóa, ghim, nổi bật
-- Hệ thống danh mục bài viết
-- Upload ảnh bìa, gallery, ảnh trong nội dung
-- SEO meta tags, Open Graph, Structured Data
-
-### 👥 Người dùng
-- Đăng ký / Đăng nhập (JWT)
-- Xác minh email (SMTP)
-- Quên mật khẩu
-- Phân quyền: `user` · `manager` · `admin`
-- Trang cá nhân
-
-### ⚙️ Quản trị (Admin)
-- Dashboard thống kê tổng quan
-- Quản lý người dùng (xem, phân quyền)
-- Quản lý giải đấu
-- Quản lý bài viết & danh mục
-- Cài đặt website (SEO, branding, social links, SMTP)
-
-### 🔍 SEO
-- `sitemap.xml` tự động
-- `robots.txt` cấu hình được
-- Dynamic metadata từ SiteSettings
-- Google Analytics & Facebook Pixel (tùy chọn)
+**6v6 Vietnam Official** là nền tảng website All-in-One được thiết kế riêng để tổ chức, quản lý và theo dõi các giải đấu eSports (đặc biệt chuẩn hóa cho FO4 / Efootcup). Hệ thống cung cấp trải nghiệm chuyên nghiệp cho 3 nhóm đối tượng:
+- **Người xem (Public):** Trải nghiệm UX/UI cao cấp, xem lịch thi đấu, bảng xếp hạng, sơ đồ nhánh đấu và video highlights dạng Tiktok.
+- **Vận động viên (Players):** Đăng ký thi đấu, tìm kiếm đồng đội, quản lý hồ sơ cá nhân và theo dõi điểm số/lịch sử thi đấu.
+- **Ban tổ chức (Managers/Admins):** Quản trị vòng đời giải đấu hoàn toàn tự động từ khâu duyệt đơn, chia bảng, bốc thăm nhánh đấu cho đến cập nhật tỷ số trực tiếp.
 
 ---
 
-## Tech Stack
+## 🔥 Tính năng Cốt lõi (Core Features)
 
-| Layer | Công nghệ |
-|-------|-----------|
-| **Framework** | Next.js 15 (App Router) |
-| **Language** | TypeScript |
-| **Styling** | Tailwind CSS 4 + shadcn/ui |
-| **Database** | MongoDB + Mongoose |
-| **Auth** | JWT (jsonwebtoken + bcryptjs) |
-| **Email** | Nodemailer (SMTP) |
-| **Editor** | Tiptap (Rich Text) |
-| **Animation** | Framer Motion |
-| **Icons** | Lucide React |
+### 1. 🌐 Public Portal (Giao diện Khán giả & Tuyển thủ)
+- **Hệ thống Giải đấu (Tournaments):** Trình bày chi tiết thông tin, thể lệ (rich-text), giải thưởng. Hỗ trợ đa dạng thể thức: `1v1`, `2v2`, `3v3`, `6v6`.
+- **Sơ đồ nhánh đấu (Knockout Brackets):** Render sơ đồ cây thi đấu trực quan, đẹp mắt chuẩn eSports.
+- **Bảng xếp hạng Vòng bảng (Standings):** Cập nhật realtime với các chỉ số chuyên sâu: Số trận, Thắng, Hòa, Thua, Thắng/Thua Penalty, Hệ số bàn thắng, và Điểm số.
+- **Tiktok-style Video Highlights:** Tích hợp tab **Video** dạng vuốt dọc (snap-scrolling) cho phép khán giả xem các pha highlight/bàn thắng cực mượt trên mobile.
+- **Bảng vàng (Leaderboards / BXH):** BXH tổng Hệ thống chia làm 2 nhánh: BXH Đội bóng (Teams) và BXH Tuyển thủ (Players).
+- **Hồ sơ Tuyển thủ (Player Profiles):** Trang cá nhân hiển thị avatar, ID ingame, lịch sử các giải đã tham gia và thông số chi tiết.
 
----
+### 2. 🛡 Manager Dashboard (Hệ thống Quản trị Giải đấu)
+- **Quản lý Đăng ký (Registration System):**
+  - Khung duyệt đơn thông minh.
+  - Tự động cảnh báo khi trùng lặp.
+  - **Auto-sync:** Khi Admin bấm "Duyệt", hệ thống tự động khởi tạo "Đội bóng" (Team) và đưa vào danh sách thi đấu chính thức.
+- **Smart Roster (Quản lý Đội hình):** Hỗ trợ thêm thủ công người chơi hoặc tạo nhanh "Tài khoản Khách (Guest)" nếu người chơi chưa có tài khoản trên hệ thống.
+- **Bốc thăm & Chia bảng (Draw & Groups):** Tool chia bảng đấu tự động hoặc thủ công. Thiết lập số lượng đội/bảng và số đội đi tiếp.
+- **Quản lý Trận đấu (Match Center):**
+  - Cập nhật tỷ số trực tiếp.
+  - Hỗ trợ nhập tỷ số luân lưu (Penalty shootouts).
+  - Tự động cộng/trừ điểm lên Bảng xếp hạng ngay khi trận đấu kết thúc dựa trên Scoring Logic của giải (vd: Thắng Pen +2đ, Thua Pen +1đ).
+- **Video Manager:** Công cụ quản lý kho video highlights (hỗ trợ link MP4 và Embed iframe).
 
-## Cấu trúc dự án
-
-```
-6v6-vietnam-official/
-├── app/
-│   ├── (admin)/admin/          # Trang quản trị
-│   │   ├── page.tsx            # Dashboard
-│   │   ├── nguoi-dung/         # Quản lý user
-│   │   ├── giai-dau/           # Quản lý giải đấu
-│   │   ├── bai-viet/           # Quản lý bài viết
-│   │   │   ├── tao-moi/        # Tạo bài viết
-│   │   │   └── [id]/chinh-sua/ # Sửa bài viết
-│   │   ├── cai-dat/            # Cài đặt website
-│   │   └── layout.tsx          # Admin layout + sidebar
-│   ├── (auth)/                 # Auth pages
-│   │   ├── dang-nhap/          # Đăng nhập
-│   │   ├── dang-ky/            # Đăng ký
-│   │   ├── quen-mat-khau/      # Quên mật khẩu
-│   │   └── xac-minh/           # Xác minh email
-│   ├── (main)/                 # Public pages
-│   │   ├── page.tsx            # Trang chủ
-│   │   ├── giai-dau/           # Giải đấu
-│   │   ├── bxh/                # Bảng xếp hạng
-│   │   ├── tin-tuc/            # Tin tức
-│   │   └── trang-ca-nhan/      # Profile
-│   ├── (manager)/manager/      # Manager dashboard
-│   ├── api/                    # API Routes
-│   ├── sitemap.ts              # Dynamic sitemap
-│   ├── robots.ts               # Robots.txt
-│   └── layout.tsx              # Root layout + metadata
-├── components/
-│   ├── ui/                     # shadcn/ui components
-│   ├── admin/                  # Admin components (TiptapEditor)
-│   ├── sections/               # Homepage sections
-│   ├── Navbar.tsx
-│   └── Footer.tsx
-├── contexts/
-│   └── AuthContext.tsx          # Auth state management
-├── lib/
-│   ├── api.ts                  # Client-side API helpers
-│   ├── auth.ts                 # JWT auth utilities
-│   ├── mongodb.ts              # DB connection
-│   ├── email.ts                # Email sender
-│   ├── site-settings.ts        # SiteSettings singleton
-│   └── category-icons.tsx      # Category icon mapper
-├── models/                     # Mongoose schemas
-│   ├── User.ts
-│   ├── Tournament.ts
-│   ├── Registration.ts
-│   ├── Team.ts
-│   ├── Match.ts
-│   ├── Post.ts
-│   ├── Category.ts
-│   ├── SiteSettings.ts
-│   ├── RankingLog.ts
-│   └── Counter.ts
-└── public/
-    └── images/                 # Static assets
-```
+### 3. 🔔 Hệ thống Core (Core Systems)
+- **Real-time Notifications:** Hệ thống thông báo (chuông) trong app. Thông báo tự động gửi khi đơn đăng ký được duyệt/từ chối hoặc khi có đăng ký mới.
+- **Advanced Search:** Thanh tìm kiếm toàn cục (Global Search) hỗ trợ tìm Tuyển thủ, Đội bóng nhanh chóng với debouncing.
+- **Custom Authentication:** Hệ thống đăng nhập/đăng ký bảo mật bằng JWT và bcrypt. Phân quyền chặt chẽ (Admin, Manager, User).
+- **Rich Text Editor:** Sử dụng **Tiptap** cho phép soạn thảo Thể lệ giải đấu, mô tả cực kỳ mạnh mẽ (hỗ trợ headings, lists, links).
 
 ---
 
-## Cài đặt
+## 🏗 Kiến trúc Kỹ thuật (Technical Architecture)
 
-### Yêu cầu
+- **Frontend / Backend Framework:** `Next.js 16+` (App Router) cho khả năng SSR/SSG tối ưu SEO và API Routes mạnh mẽ.
+- **UI/UX & Styling:** `Tailwind CSS v4` kết hợp cùng `Framer Motion` tạo hiệu ứng mượt mà (micro-animations, trang thái hover, layout transitions).
+- **Database:** `MongoDB` lưu trữ dữ liệu phi cấu trúc, tương tác qua `Mongoose` ORM.
+- **Data Models:**
+  - `User`: Quản lý tài khoản, role, thông tin cá nhân.
+  - `Team`: Quản lý Đội hình (Đội trưởng, Thành viên, Logo).
+  - `Tournament`: Lưu cấu hình giải đấu (Luật, Điểm số, Slots, Videos).
+  - `Registration`: Xử lý luồng đăng ký duyệt/chờ duyệt.
+  - `Match`: Quản lý từng trận đấu (Vòng bảng/Knockout, Điểm số, Penalty).
 
-- **Node.js** ≥ 20
-- **MongoDB** (local hoặc Atlas)
-- **npm** hoặc **yarn**
+---
 
-### Bước 1 — Clone & cài dependencies
+## 🚀 Hướng dẫn Cài đặt (Getting Started)
 
+### Yêu cầu hệ thống (Prerequisites)
+- [Node.js](https://nodejs.org/) (Phiên bản v20 trở lên)
+- [MongoDB](https://www.mongodb.com/) (Local hoặc MongoDB Atlas)
+- Git
+
+### Các bước Cài đặt (Installation Steps)
+
+**1. Clone mã nguồn**
 ```bash
-git clone <repository-url>
+git clone <your-repo-url>
 cd 6v6-vietnam-official
+```
+
+**2. Cài đặt thư viện (Install Dependencies)**
+```bash
 npm install
 ```
 
-### Bước 2 — Cấu hình biến môi trường
+**3. Cấu hình Biến môi trường (Environment Variables)**
+Tạo file `.env.local` ở thư mục gốc và điền các thông tin sau:
+```env
+# MongoDB Connection String
+MONGODB_URI=mongodb+srv://<username>:<password>@cluster.mongodb.net/6v6vietnam
 
-```bash
-cp .env.local.example .env.local
-# Chỉnh sửa các giá trị trong .env.local
+# JWT Secret Key (Chuỗi bảo mật cho token)
+JWT_SECRET=your_super_secret_jwt_key_here
+
+# Domain hệ thống (Sử dụng cho các API và Links)
+NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
-### Bước 3 — Chạy development server
-
+**4. Chạy môi trường Development**
 ```bash
 npm run dev
 ```
-
-Mở [http://localhost:3000](http://localhost:3000) để xem kết quả.
+Truy cập hệ thống tại: [http://localhost:3000](http://localhost:3000)
 
 ---
 
-## Biến môi trường
+## 📂 Cấu trúc Thư mục (Directory Structure)
 
-Tạo file `.env.local` tại thư mục gốc:
-
-```env
-# Database
-MONGODB_URI=mongodb+srv://<user>:<password>@<cluster>.mongodb.net/<dbname>
-
-# JWT
-JWT_SECRET=your-jwt-secret-key
-JWT_EXPIRES_IN=7d
-
-# Site
-NEXT_PUBLIC_SITE_URL=http://localhost:3000
-
-# Email (SMTP)
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_SECURE=false
-SMTP_USER=your-email@gmail.com
-SMTP_PASS=your-app-password
-SMTP_FROM="6v6 Vietnam <noreply@6v6.vn>"
-
-# Analytics (tùy chọn)
-# NEXT_PUBLIC_GA_ID=G-XXXXXXXXXX
-# NEXT_PUBLIC_FB_PIXEL_ID=1234567890
+```text
+6v6-vietnam-official/
+├── app/
+│   ├── (main)/             # Tuyến đường Public (Trang chủ, Giải đấu, BXH, Profile)
+│   ├── (manager)/          # Tuyến đường Protected dành cho Quản trị viên
+│   └── api/                # API Endpoints (Tournaments, Matches, Auth, Users)
+├── components/             # React Components dùng chung
+│   ├── admin/              # UI Components của Manager Dashboard
+│   ├── ui/                 # Core UI Elements (Buttons, Modals, Inputs)
+│   └── layout/             # Header, Footer, Sidebar
+├── lib/                    # Core Utilities (MongoDB connect, JWT auth helpers)
+├── models/                 # Database Schemas (Mongoose)
+├── public/                 # Assets (Images, Logos, SVGs)
+└── scripts/                # Scripts dọn dẹp, giả lập dữ liệu (Seeders)
 ```
 
 ---
 
-## Scripts
-
-| Lệnh | Mô tả |
-|-------|-------|
-| `npm run dev` | Chạy development server |
-| `npm run build` | Build production |
-| `npm run start` | Chạy production server |
-| `npm run lint` | Kiểm tra linting |
-
----
-
-## API Endpoints
-
-### Auth (`/api/auth`)
-| Method | Endpoint | Mô tả |
-|--------|----------|-------|
-| POST | `/api/auth/register` | Đăng ký tài khoản |
-| POST | `/api/auth/login` | Đăng nhập |
-| POST | `/api/auth/logout` | Đăng xuất |
-| GET | `/api/auth/me` | Lấy thông tin user hiện tại |
-| POST | `/api/auth/verify` | Xác minh email |
-| POST | `/api/auth/resend-code` | Gửi lại mã xác minh |
-| POST | `/api/auth/forgot-password` | Quên mật khẩu |
-
-### Tournaments (`/api/tournaments`)
-| Method | Endpoint | Mô tả |
-|--------|----------|-------|
-| GET | `/api/tournaments` | Danh sách giải đấu |
-| POST | `/api/tournaments` | Tạo giải đấu |
-| GET | `/api/tournaments/:id` | Chi tiết giải đấu |
-| POST | `/api/tournaments/:id/matches/result` | Cập nhật kết quả |
-
-### Posts (`/api/posts`)
-| Method | Endpoint | Mô tả |
-|--------|----------|-------|
-| GET | `/api/posts` | Danh sách bài viết public |
-| GET | `/api/posts/:slug` | Bài viết theo slug |
-
-### Admin (`/api/admin`) — *Yêu cầu quyền admin*
-| Method | Endpoint | Mô tả |
-|--------|----------|-------|
-| GET | `/api/admin/stats` | Thống kê dashboard |
-| GET | `/api/admin/users` | Danh sách người dùng |
-| GET/POST | `/api/admin/content` | CRUD bài viết |
-| PUT/DELETE | `/api/admin/content/:id` | Sửa/xóa bài viết |
-| POST | `/api/admin/content/upload` | Upload ảnh nội dung |
-| GET/POST/PUT/DELETE | `/api/admin/categories` | CRUD danh mục |
-| GET/PUT | `/api/admin/settings` | Cài đặt website |
-| POST | `/api/admin/settings/upload` | Upload logo/favicon |
-
-### Khác
-| Method | Endpoint | Mô tả |
-|--------|----------|-------|
-| GET | `/api/rankings` | Bảng xếp hạng |
-| GET | `/api/site-settings` | Cài đặt site (public) |
-| GET | `/api/manager/dashboard` | Thống kê manager |
-
----
-
-## Phân quyền
-
-| Role | Quyền |
-|------|-------|
-| `user` | Xem nội dung, trang cá nhân |
-| `manager` | Tạo/quản lý giải đấu, đội bóng |
-| `admin` | Toàn quyền: quản lý user, nội dung, cài đặt |
-
----
-
-## Đóng góp
-
-1. Fork repository
-2. Tạo branch: `git checkout -b feature/ten-tinh-nang`
-3. Commit: `git commit -m "feat: mô tả thay đổi"`
-4. Push: `git push origin feature/ten-tinh-nang`
-5. Tạo Pull Request
-
----
-
-<p align="center">
-  <strong>6v6 Vietnam</strong> · Built with ❤️ by VinCode
-</p>
+## 🤝 Hỗ trợ & Bản quyền
+Được thiết kế và phát triển độc quyền cho **6v6 Vietnam Official**. Mọi quyền được bảo lưu. 
+Giao diện lấy cảm hứng và kế thừa tiêu chuẩn chất lượng của nền tảng **efootcup**, mang đến trải nghiệm Thể thao điện tử chuẩn mực nhất.

@@ -8,6 +8,10 @@ export interface ITournament extends Document {
     rules: string;
     banner?: string;
     thumbnail?: string;
+    seo?: {
+        title?: string;
+        description?: string;
+    };
     createdBy: mongoose.Types.ObjectId;
 
     // Core
@@ -78,6 +82,11 @@ export interface ITournament extends Document {
         round: number;
         matches: mongoose.Types.ObjectId[];
     }[];
+    videos?: {
+        url: string;
+        title: string;
+        createdAt: Date;
+    }[];
 
     createdAt: Date;
     updatedAt: Date;
@@ -108,6 +117,10 @@ const TournamentSchema = new Schema<ITournament>(
         },
         banner: { type: String, default: "" },
         thumbnail: { type: String, default: "" },
+        seo: {
+            title: { type: String, default: "" },
+            description: { type: String, default: "" },
+        },
         createdBy: {
             type: Schema.Types.ObjectId,
             ref: "User",
@@ -205,6 +218,15 @@ const TournamentSchema = new Schema<ITournament>(
                 matches: [{ type: Schema.Types.ObjectId, ref: "Match" }],
             },
         ],
+        
+        // Video Highlights
+        videos: [
+            {
+                url: String,
+                title: String,
+                createdAt: { type: Date, default: Date.now },
+            }
+        ]
     },
     {
         timestamps: true,

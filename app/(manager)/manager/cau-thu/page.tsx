@@ -20,7 +20,7 @@ export default function PlayersPage() {
             <div className="flex gap-4">
                 <div className="relative flex-1 max-w-md">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                    <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Tìm kiếm theo tên, ID, hoặc SĐT..." className="pl-9 h-11 rounded-xl" />
+                    <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Tìm kiếm theo tên, ID, hoặc SĐT..." className="pl-9 h-11" />
                 </div>
                 <Button variant="outline" className="h-11 rounded-xl border-gray-200">
                     <Filter className="w-4 h-4 mr-2" /> Bộ lọc

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -51,11 +52,9 @@ export default function ManagerGiaiDauPage() {
     const loadTournaments = async () => {
         setIsLoading(true);
         try {
-            // Use dashboardAPI stats as a workaround for now, assuming it returns recentTournaments
-            const res = await fetch("/api/manager/dashboard").then(r => r.json());
-            if (res.success && res.data.recentTournaments) {
-                // In reality, you'd want a separate API like /api/manager/tournaments?limit=100
-                setTournaments(res.data.recentTournaments || []);
+            const res = await tournamentAPI.getMyTournaments({ limit: "200" });
+            if (res.success && res.data.tournaments) {
+                setTournaments(res.data.tournaments);
             }
         } catch (error) {
             console.error("Failed to load tournaments:", error);
@@ -68,12 +67,13 @@ export default function ManagerGiaiDauPage() {
     const handleDelete = async (id: string, title: string) => {
         if (!confirm(`Bạn có chắc muốn xóa "${title}"?`)) return;
         try {
-            // const res = await tournamentAPI.delete(id);
-            // if (res.success) {
-            //     setTournaments((prev) => prev.filter((t) => t._id !== id));
-            //     toast.success("Đã xóa giải đấu");
-            // }
-            toast.error("Chức năng đang phát triển");
+            const res = await tournamentAPI.delete(id);
+            if (res.success) {
+                setTournaments((prev) => prev.filter((t) => t._id !== id));
+                toast.success("Đã xóa giải đấu");
+            } else {
+                toast.error(res.message || "Không thể xóa giải đấu");
+            }
         } catch (error) {
             toast.error("Không thể xóa giải đấu");
         }
@@ -202,7 +202,7 @@ export default function ManagerGiaiDauPage() {
             <div className="space-y-3">
                 <div className="relative w-full sm:max-w-sm">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                    <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Tìm giải đấu..." className="pl-9 h-10 rounded-xl border-gray-200 focus-visible:ring-efb-red/30 focus-visible:border-efb-red" />
+                    <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Tìm giải đấu..." className="pl-9 h-10 border-gray-200 focus-visible:ring-efb-red/30 focus-visible:border-efb-red" />
                 </div>
                 <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
                     <div className="overflow-x-auto -mx-1 px-1 pb-1 scrollbar-hide">
@@ -252,20 +252,36 @@ export default function ManagerGiaiDauPage() {
 
                         return (
                             <motion.div key={t._id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }} className="bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-lg hover:border-gray-200 transition-all duration-300 group flex flex-col">
-                                <div className={`px-4 py-2 flex items-center justify-between ${sty.bg}`}>
-                                    <span className="inline-flex items-center gap-1.5 text-[10px] font-bold">
-                                        <span className={`w-1.5 h-1.5 rounded-full ${sty.dot} ${t.status === "ongoing" ? "animate-pulse" : ""}`} />
-                                        {sty.label}
-                                    </span>
-                                    <div className="flex items-center gap-1">
-                                        {t.isPublic === false && (
-                                            <span className="inline-flex items-center gap-1 text-[9px] font-bold bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded"><EyeOff className="w-2.5 h-2.5" /> Đã ẩn</span>
-                                        )}
-                                        <Link href={`/manager/giai-dau/${t._id}`}><button className="w-6 h-6 rounded-md bg-white/60 hover:bg-white flex items-center justify-center text-gray-600 hover:text-efb-red transition-colors"><Edit className="w-3 h-3" /></button></Link>
-                                        <Link href={`/giai-dau/${t._id}`} target="_blank"><button className="w-6 h-6 rounded-md bg-white/60 hover:bg-white flex items-center justify-center text-gray-600 hover:text-indigo-600 transition-colors"><ExternalLink className="w-3 h-3" /></button></Link>
-                                        <button onClick={() => handleDelete(t._id, t.title)} className="w-6 h-6 rounded-md bg-white/60 hover:bg-white flex items-center justify-center text-gray-600 hover:text-red-500 transition-colors"><Trash2 className="w-3 h-3" /></button>
+                                {/* Banner image */}
+                                <Link href={`/manager/giai-dau/${t._id}`} className="block relative h-36 overflow-hidden bg-gradient-to-br from-gray-100 to-gray-50">
+                                    {t.banner ? (
+                                        <img src={t.banner} alt={t.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                                    ) : (
+                                        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-red-50 to-gray-100">
+                                            <Trophy className="w-10 h-10 text-gray-200" />
+                                        </div>
+                                    )}
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+                                    <div className="absolute top-3 left-3 right-3 flex items-center justify-between">
+                                        <span className={`inline-flex items-center gap-1.5 px-2 py-1 text-[10px] font-bold rounded-lg ${sty.bg}`}>
+                                            <span className={`w-1.5 h-1.5 rounded-full ${sty.dot} ${t.status === "ongoing" ? "animate-pulse" : ""}`} />
+                                            {sty.label}
+                                        </span>
+                                        <div className="flex items-center gap-1">
+                                            {t.isPublic === false && (
+                                                <span className="inline-flex items-center gap-1 text-[9px] font-bold bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded"><EyeOff className="w-2.5 h-2.5" /> Ẩn</span>
+                                            )}
+                                        </div>
                                     </div>
-                                </div>
+                                    {startDate && (
+                                        <div className="absolute bottom-3 left-3">
+                                            <span className="inline-flex items-center gap-1 text-[10px] font-medium text-white bg-black/50 backdrop-blur-sm px-2 py-1 rounded-md">
+                                                <Calendar className="w-3 h-3" /> {startDate}
+                                            </span>
+                                        </div>
+                                    )}
+                                </Link>
+
                                 <div className="p-4 flex-1 flex flex-col">
                                     <Link href={`/manager/giai-dau/${t._id}`} className="text-sm font-bold text-gray-900 hover:text-efb-red transition-colors line-clamp-2 leading-snug">{t.title}</Link>
                                     <div className="flex flex-wrap items-center gap-1.5 mt-2.5">
@@ -298,10 +314,51 @@ export default function ManagerGiaiDauPage() {
                                             <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden"><div className="h-full bg-efb-red rounded-full" style={{ width: `${progress}%` }} /></div>
                                         </div>
                                     )}
+                                    {/* Action buttons */}
+                                    <div className="flex items-center gap-1.5 mt-3 pt-3 border-t border-gray-50">
+                                        <Link href={`/manager/giai-dau/${t._id}`} className="flex-1">
+                                            <Button variant="outline" className="w-full h-8 text-xs rounded-lg border-gray-200 hover:text-efb-red hover:border-efb-red/30">
+                                                <Edit className="w-3 h-3 mr-1" /> Quản lý
+                                            </Button>
+                                        </Link>
+                                        <Link href={`/giai-dau/${t._id}`} target="_blank">
+                                            <Button variant="outline" className="h-8 w-8 p-0 rounded-lg border-gray-200 text-gray-500 hover:text-indigo-600 hover:border-indigo-200">
+                                                <ExternalLink className="w-3 h-3" />
+                                            </Button>
+                                        </Link>
+                                        <Button variant="outline" onClick={() => handleDelete(t._id, t.title)} className="h-8 w-8 p-0 rounded-lg border-gray-200 text-gray-500 hover:text-red-500 hover:border-red-200">
+                                            <Trash2 className="w-3 h-3" />
+                                        </Button>
+                                    </div>
                                 </div>
                             </motion.div>
                         );
                     })}
+                </div>
+            )}
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+                <div className="flex items-center justify-center gap-2 pt-4">
+                    <Button
+                        variant="outline"
+                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                        disabled={currentPage === 1}
+                        className="h-9 px-3 rounded-xl text-xs"
+                    >
+                        <ChevronLeft className="w-4 h-4" />
+                    </Button>
+                    <span className="text-xs text-gray-400 px-3">
+                        Trang <span className="font-bold text-gray-700">{currentPage}</span> / <span className="font-bold text-gray-700">{totalPages}</span>
+                    </span>
+                    <Button
+                        variant="outline"
+                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                        disabled={currentPage === totalPages}
+                        className="h-9 px-3 rounded-xl text-xs"
+                    >
+                        <ChevronRight className="w-4 h-4" />
+                    </Button>
                 </div>
             )}
         </div>

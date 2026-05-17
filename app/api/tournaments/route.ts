@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
         const search = searchParams.get("search") || "";
         const sort = searchParams.get("sort") || "-createdAt";
 
-        const query: any = { isPublic: true };
+        const query: any = { isPublic: true, status: { $nin: ["draft", "cancelled"] } };
         if (status && status !== "all") query.status = status;
         if (gameMode && gameMode !== "all") query.gameMode = gameMode;
         if (search) {

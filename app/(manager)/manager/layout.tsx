@@ -25,7 +25,8 @@ import {
     Swords,
     Calendar,
     UserCheck,
-    ClipboardList
+    ClipboardList,
+    PlaySquare
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
@@ -53,8 +54,11 @@ const mainBottomLinks = [
 const tournamentSidebarLinks = (id: string) => [
     { label: "Tổng quan", href: `/manager/giai-dau/${id}`, icon: Eye },
     { label: "Đăng ký thi đấu", href: `/manager/giai-dau/${id}/dang-ky`, icon: UserCheck },
+    { label: "Bảng đấu", href: `/manager/giai-dau/${id}/bang-dau`, icon: ClipboardList },
     { label: "Lịch thi đấu", href: `/manager/giai-dau/${id}/lich`, icon: Calendar },
-    { label: "Cài đặt giải đấu", href: `/manager/giai-dau/${id}/cai-dat`, icon: Settings },
+    { label: "Bóc thăm", href: `/manager/giai-dau/${id}/boc-tham`, icon: Swords },
+    { label: "Video", href: `/manager/giai-dau/${id}/video`, icon: PlaySquare },
+    { label: "Cài đặt", href: `/manager/giai-dau/${id}/cai-dat`, icon: Settings },
 ];
 
 export default function ManagerLayout({
@@ -64,9 +68,44 @@ export default function ManagerLayout({
 }) {
     const pathname = usePathname();
     const router = useRouter();
-    const { user, isLoading, isAuthenticated, isManager, logout } = useAuth();
+    const { user, isLoading, isAuthenticated, isManager, logout, token } = useAuth();
     const [collapsed, setCollapsed] = useState(false);
     const [mobileOpen, setMobileOpen] = useState(false);
+    const [notifications, setNotifications] = useState<any[]>([]);
+    const [unreadCount, setUnreadCount] = useState(0);
+
+    // Fetch notifications
+    useEffect(() => {
+        if (isAuthenticated && token) {
+            fetchNotifications();
+            const interval = setInterval(fetchNotifications, 120000);
+            return () => clearInterval(interval);
+        }
+    }, [isAuthenticated, token]);
+
+    const fetchNotifications = async () => {
+        try {
+            const res = await fetch("/api/notifications", {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            const data = await res.json();
+            if (data.success) {
+                setNotifications(data.data.notifications);
+                setUnreadCount(data.data.unreadCount);
+            }
+        } catch { /* silent */ }
+    };
+
+    const markAllAsRead = async () => {
+        try {
+            await fetch("/api/notifications", {
+                method: "PUT",
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setUnreadCount(0);
+            setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+        } catch { /* silent */ }
+    };
 
     // Auth protection
     useEffect(() => {
@@ -111,18 +150,13 @@ export default function ManagerLayout({
     const SidebarContent = () => (
         <div className="flex flex-col h-full">
             {/* Logo */}
-            <div className={`flex items-center h-16 px-4 border-b border-gray-100 ${collapsed ? "justify-center" : "gap-3"}`}>
+            <div className={`flex flex-col items-center h-16 px-4 border-b border-gray-100 justify-center ${collapsed ? "" : ""}`}>
                 {collapsed ? (
                     <Image src="/images/logo/logo_6v6_remove_bg.png" alt="6v6 Vietnam" width={32} height={32} className="w-8 h-8 object-contain" />
                 ) : (
                     <>
-                        <div className="flex-shrink-0">
-                            <Image src="/images/logo/logo_6v6_remove_bg.png" alt="6v6 Vietnam" width={80} height={32} className="h-8 w-auto object-contain" />
-                        </div>
-                        <div className="flex flex-col min-w-0">
-                            <span className="text-sm font-bold text-efb-dark leading-tight">6v6 Vietnam</span>
-                            <span className="text-[10px] text-efb-red font-medium">Manager</span>
-                        </div>
+                        <Image src="/images/logo/logo_6v6_remove_bg.png" alt="6v6 Vietnam" width={120} height={40} className="h-9 w-auto object-contain" />
+                        <span className="text-[10px] text-efb-red font-semibold uppercase tracking-wider">Manager</span>
                     </>
                 )}
             </div>
@@ -266,7 +300,7 @@ export default function ManagerLayout({
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-efb-text-muted" />
                             <input
                                 placeholder="Tìm kiếm..."
-                                className="w-64 h-9 pl-9 pr-3 rounded-lg bg-gray-50 border border-gray-200 text-sm text-efb-text-secondary focus:bg-white focus:border-efb-red focus:ring-2 focus:ring-efb-red/10 outline-none transition-all"
+                                className="w-64 h-9 pl-9 pr-3 rounded bg-gray-50 border border-gray-200 text-sm text-efb-text-secondary focus:bg-white focus:border-efb-red focus:ring-2 focus:ring-efb-red/10 outline-none transition-all"
                             />
                         </div>
                     </div>
@@ -274,15 +308,44 @@ export default function ManagerLayout({
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <button className="relative w-9 h-9 rounded-lg bg-gray-50 hover:bg-gray-100 flex items-center justify-center transition-colors focus:outline-none focus:ring-2 focus:ring-efb-red/20">
-                                    <Bell className="w-4 h-4 text-efb-text-secondary" />
+                                    <Bell className={`w-4 h-4 ${unreadCount > 0 ? 'text-efb-red' : 'text-efb-text-secondary'}`} />
+                                    {unreadCount > 0 && (
+                                        <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full border-2 border-white">
+                                            {unreadCount > 9 ? '9+' : unreadCount}
+                                        </span>
+                                    )}
                                 </button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-80 p-0 rounded-2xl border-gray-100 shadow-xl overflow-hidden mt-2">
                                 <div className="p-4 bg-gray-50/50 border-b border-gray-100 flex items-center justify-between">
                                     <div className="font-bold text-gray-900 text-sm">Thông báo</div>
+                                    {unreadCount > 0 && (
+                                        <button onClick={markAllAsRead} className="text-[10px] font-bold text-efb-red hover:underline uppercase">Đọc tất cả</button>
+                                    )}
                                 </div>
-                                <div className="p-8 text-center text-sm text-gray-500">
-                                    Tính năng đang phát triển.
+                                <div className="max-h-[360px] overflow-y-auto">
+                                    {notifications.length === 0 ? (
+                                        <div className="p-8 text-center">
+                                            <Bell className="w-8 h-8 text-gray-100 mx-auto mb-2" />
+                                            <p className="text-xs text-gray-400">Không có thông báo</p>
+                                        </div>
+                                    ) : (
+                                        notifications.map((notif) => (
+                                            <DropdownMenuItem key={notif._id} asChild className={`p-0 focus:bg-transparent cursor-default border-b border-gray-50 last:border-0 ${!notif.isRead ? 'bg-red-50/40' : ''}`}>
+                                                <Link href={notif.link || '#'} className="flex gap-3 px-4 py-3 hover:bg-gray-50 transition-colors">
+                                                    <div className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center ${notif.type === 'registration' ? 'bg-amber-100 text-amber-600' : notif.type === 'tournament' ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-600'}`}>
+                                                        {notif.type === 'registration' ? <Users className="w-4 h-4" /> : notif.type === 'tournament' ? <Trophy className="w-4 h-4" /> : <Bell className="w-4 h-4" />}
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="text-[13px] font-bold text-gray-900 leading-tight mb-0.5">{notif.title}</p>
+                                                        <p className="text-[11px] text-gray-500 line-clamp-2 leading-relaxed">{notif.message}</p>
+                                                        <p className="text-[10px] text-gray-400 mt-1">{new Date(notif.createdAt).toLocaleDateString('vi-VN')}</p>
+                                                    </div>
+                                                    {!notif.isRead && <div className="w-2 h-2 rounded-full bg-efb-red mt-1.5 flex-shrink-0" />}
+                                                </Link>
+                                            </DropdownMenuItem>
+                                        ))
+                                    )}
                                 </div>
                             </DropdownMenuContent>
                         </DropdownMenu>

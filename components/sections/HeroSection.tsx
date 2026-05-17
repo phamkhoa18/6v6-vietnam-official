@@ -44,9 +44,6 @@ export function HeroSection() {
                     </video>
                 </motion.div>
 
-                White fade at bottom — long smooth gradient, no hard edge
-                <div className="absolute bottom-0 left-0 right-0 h-48 pointer-events-none" style={{ background: 'linear-gradient(to top, white 0%, rgba(255,255,255,0.85) 20%, rgba(255,255,255,0.5) 45%, rgba(255,255,255,0.15) 70%, transparent 100%)' }} />
-
                 {/* Floating gold particles */}
                 {isMounted && (
                     <div className="absolute inset-0 pointer-events-none overflow-hidden">

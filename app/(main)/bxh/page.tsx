@@ -1,410 +1,449 @@
 "use client";
-
-import { useState, useEffect, useCallback } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useState, useEffect, useMemo } from "react";
+import Link from "next/link";
+import { useSearchParams, useRouter } from "next/navigation";
 import {
-    Trophy, Search, ChevronLeft, ChevronRight, Medal,
-    TrendingUp, Users, User, Loader2, Crown, Target,
-    Swords, Shield, ChevronDown, ArrowUp
+    Search, Trophy, Crown, Medal, ChevronLeft, ChevronRight,
+    Users, ExternalLink, Gamepad2, Award, X, CheckCircle2, XCircle,
+    Loader2, Eye, Phone, Mail, MapPin, Shield, User as UserIcon,
 } from "lucide-react";
-import { GAME_MODE_INFO, type GameMode, GAME_MODES } from "@/lib/ranking-points";
+import Image from "next/image";
 
-const MODE_TABS: { key: GameMode; label: string; icon: typeof User }[] = [
-    { key: "1v1", label: "1 vs 1", icon: User },
-    { key: "2v2", label: "2 vs 2", icon: Users },
-    { key: "3v3", label: "3 vs 3", icon: Users },
-    { key: "6v6", label: "6 vs 6", icon: Shield },
+
+type Player = {
+    rank: number;
+    user?: {
+        _id: string;
+        name: string;
+        avatar?: string;
+        nickname?: string;
+        playerId?: number;
+    };
+    teamName?: string;
+    totalPoints: number;
+    totalMatches: number;
+    tournamentsPlayed: number;
+    facebook?: string;
+};
+
+
+
+const PER_PAGE_OPTIONS = [20, 50, 100];
+
+
+const MOCK_PLAYERS: Player[] = [
+    { rank: 1, user: { _id: "1", name: "Nguyễn Văn A", avatar: "https://i.pravatar.cc/150?u=1", nickname: "Sát thủ bóng đêm", playerId: 1001 }, teamName: "Đà Nẵng FC", totalPoints: 1250, totalMatches: 15, tournamentsPlayed: 3, facebook: "https://facebook.com" },
+    { rank: 2, user: { _id: "2", name: "Trần Văn B", avatar: "https://i.pravatar.cc/150?u=2", nickname: "Vua phá lưới", playerId: 1002 }, teamName: "Hà Nội eSports", totalPoints: 1100, totalMatches: 14, tournamentsPlayed: 3 },
+    { rank: 3, user: { _id: "3", name: "Lê Thị C", avatar: "https://i.pravatar.cc/150?u=3", nickname: "Nữ hoàng", playerId: 1003 }, teamName: "Sài Gòn FC", totalPoints: 950, totalMatches: 12, tournamentsPlayed: 2 },
+    { rank: 4, user: { _id: "4", name: "Phạm Văn D", nickname: "Kẻ hủy diệt", playerId: 1004 }, teamName: "Hải Phòng", totalPoints: 800, totalMatches: 10, tournamentsPlayed: 2 },
+    { rank: 5, user: { _id: "5", name: "Vũ Văn E", avatar: "https://i.pravatar.cc/150?u=5", nickname: "Tốc độ ánh sáng", playerId: 1005 }, teamName: "Cần Thơ", totalPoints: 750, totalMatches: 9, tournamentsPlayed: 2 },
+    { rank: 6, user: { _id: "6", name: "Hoàng Văn F", avatar: "https://i.pravatar.cc/150?u=6", nickname: "Ninja", playerId: 1006 }, teamName: "Vinh", totalPoints: 700, totalMatches: 8, tournamentsPlayed: 2 },
+    { rank: 7, user: { _id: "7", name: "Đặng Văn G", avatar: "https://i.pravatar.cc/150?u=7", nickname: "Rồng trắng", playerId: 1007 }, teamName: "Huế", totalPoints: 650, totalMatches: 7, tournamentsPlayed: 2 },
 ];
 
 export default function BXHPage() {
-    const [activeMode, setActiveMode] = useState<GameMode>("1v1");
-    const [rankings, setRankings] = useState<any[]>([]);
-    const [pagination, setPagination] = useState({ page: 1, total: 0, totalPages: 1 });
-    const [isLoading, setIsLoading] = useState(true);
+    const searchParams = useSearchParams();
+    const router = useRouter();
+    const filterParam = searchParams.get("filter") as "1v1" | "2v2" | "3v3" | null;
+    const [allData, setAllData] = useState<Player[]>([]);
+    const [activeMode, setActiveMode] = useState<"1v1" | "2v2" | "3v3">(filterParam && ["1v1", "2v2", "3v3"].includes(filterParam) ? filterParam : "1v1");
+
+    const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
     const [page, setPage] = useState(1);
-    const [showScrollTop, setShowScrollTop] = useState(false);
-
-    const fetchRankings = useCallback(async () => {
-        setIsLoading(true);
-        try {
-            const params = new URLSearchParams({
-                mode: activeMode,
-                page: String(page),
-                limit: "50",
-            });
-            if (search) params.set("search", search);
-
-            const res = await fetch(`/api/rankings?${params}`);
-            const data = await res.json();
-            if (data.success) {
-                setRankings(data.data.rankings || []);
-                setPagination(data.data.pagination || { page: 1, total: 0, totalPages: 1 });
-            }
-        } catch (e) {
-            console.error("Failed to load rankings:", e);
-        } finally {
-            setIsLoading(false);
-        }
-    }, [activeMode, page, search]);
-
-    useEffect(() => { fetchRankings(); }, [fetchRankings]);
+    const [perPage, setPerPage] = useState(20);
 
     useEffect(() => {
-        const timer = setTimeout(() => { setPage(1); }, 300);
-        return () => clearTimeout(timer);
-    }, [search]);
+        setLoading(true);
+        fetch(`/api/rankings?mode=${activeMode}&limit=1000`)
+            .then((r) => r.json())
+            .then((d) => {
+                if (d.success !== false) {
+                    setAllData(d.data?.rankings?.length ? d.data.rankings : MOCK_PLAYERS);
+                }
+                setLoading(false);
+            })
+            .catch(() => setLoading(false));
+    }, [activeMode]);
 
-    useEffect(() => {
-        const handleScroll = () => setShowScrollTop(window.scrollY > 400);
-        window.addEventListener("scroll", handleScroll);
-        return () => window.removeEventListener("scroll", handleScroll);
-    }, []);
+    const filtered = useMemo(() => {
+        if (!Array.isArray(allData)) return [];
+        if (!search.trim()) return allData;
+        const q = search.toLowerCase();
+        return allData.filter((p) =>
+            String(p.user?.name || "").toLowerCase().includes(q) ||
+            String(p.user?.nickname || "").toLowerCase().includes(q) ||
+            String(p.teamName || "").toLowerCase().includes(q) ||
+            String(p.user?.playerId || "").toLowerCase().includes(q)
+        );
+    }, [search, allData]);
 
-    const top3 = rankings.slice(0, 3);
-    const rest = rankings.slice(3);
-    const isTeamMode = activeMode === "6v6";
-    const modeInfo = GAME_MODE_INFO[activeMode];
+    const totalPages = Math.max(1, Math.ceil((filtered?.length || 0) / perPage));
+    const currentPage = Math.min(page, totalPages);
+    const paged = Array.isArray(filtered) ? filtered.slice((currentPage - 1) * perPage, currentPage * perPage) : [];
+    const top3 = Array.isArray(allData) ? allData.slice(0, 3) : [];
 
-    const getRankIcon = (rank: number) => {
-        if (rank === 1) return <Crown className="w-5 h-5 text-yellow-400" />;
-        if (rank === 2) return <Medal className="w-5 h-5 text-gray-400" />;
-        if (rank === 3) return <Medal className="w-5 h-5 text-amber-600" />;
-        return <span className="text-sm font-bold text-gray-400">#{rank}</span>;
-    };
+    useEffect(() => { setPage(1); }, [search, perPage]);
 
-    const getPodiumGradient = (rank: number) => {
-        if (rank === 1) return "from-yellow-400 via-amber-500 to-yellow-600";
-        if (rank === 2) return "from-gray-300 via-gray-400 to-gray-500";
-        return "from-amber-600 via-amber-700 to-amber-800";
-    };
+    const pageRange = useMemo(() => {
+        const range: number[] = [];
+        const start = Math.max(1, currentPage - 2);
+        const end = Math.min(totalPages, currentPage + 2);
+        for (let i = start; i <= end; i++) range.push(i);
+        return range;
+    }, [currentPage, totalPages]);
 
     return (
-        <div className="min-h-screen bg-[#f8f9fa]">
-            {/* Hero Section */}
-            <section className="relative pt-28 pb-16 overflow-hidden">
-                <div className="absolute inset-0">
-                    <div className="absolute inset-0 bg-gradient-to-br from-[#7A1414] via-[#A01B1B] to-[#0F172A]" />
-                    <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "url('/images/banner/bg-nen.png')", backgroundSize: "cover", backgroundPosition: "center" }} />
-                    <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(245,158,11,0.15),transparent_60%)]" />
+        <div className="overflow-x-hidden pt-16 bg-slate-50 min-h-screen">
+            {/* ═══ HERO ═══ */}
+            <section className="relative pt-24 pb-32 lg:pt-32 lg:pb-40 overflow-hidden flex flex-col justify-center min-h-[450px]">
+                <div className="absolute inset-0 bg-[#7A1414] pointer-events-none">
+                    <div className="absolute inset-0 opacity-30 mix-blend-overlay" style={{ backgroundImage: "url('/images/banner/bg-nen.png')", backgroundSize: "cover", backgroundPosition: "center" }} />
+                    <div className="absolute inset-0 bg-gradient-to-b from-[#7A1414]/50 via-[#4a0d0d]/80 to-slate-50" />
+                    <div className="absolute inset-0 bg-[url('/assets/grid.svg')] opacity-[0.05]" />
                 </div>
-                <div className="max-w-[1200px] mx-auto px-6 lg:px-8 relative z-10 text-white">
-                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-                        <span className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/10 border border-white/20 text-efb-gold text-xs font-bold uppercase mb-4 backdrop-blur-sm">
-                            <Trophy className="w-3 h-3" />Bảng xếp hạng
-                        </span>
-                        <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extralight leading-tight mb-3">
-                            Xếp hạng <span className="font-bold text-efb-gold">6v6 Vietnam</span>
-                        </h1>
-                        <p className="text-white/60 text-lg font-light max-w-lg">
-                            Theo dõi thành tích và vị trí của bạn qua các giải đấu
-                        </p>
-                    </motion.div>
-                </div>
-            </section>
 
-            {/* Content */}
-            <section className="pb-20 -mt-6">
-                <div className="max-w-[1200px] mx-auto px-6 lg:px-8">
-                    {/* Mode Tabs + Search */}
-                    <motion.div
-                        initial={{ opacity: 0, y: 16 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 mb-6"
-                    >
-                        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                            {/* Mode Tabs */}
-                            <div className="flex bg-gray-50 rounded-xl p-1 gap-1">
-                                {MODE_TABS.map((tab) => {
-                                    const TabIcon = tab.icon;
-                                    return (
-                                        <button
-                                            key={tab.key}
-                                            onClick={() => { setActiveMode(tab.key); setPage(1); setSearch(""); }}
-                                            className={`flex items-center gap-2 px-5 py-2.5 text-sm font-semibold rounded-lg transition-all duration-300 ${activeMode === tab.key
-                                                ? "bg-gradient-to-r from-efb-red to-efb-red-light text-white shadow-lg shadow-red-500/20"
-                                                : "text-gray-500 hover:text-gray-700 hover:bg-white"
-                                                }`}
-                                        >
-                                            <TabIcon className="w-4 h-4" />
-                                            {tab.label}
-                                        </button>
-                                    );
-                                })}
-                            </div>
+                <div className="max-w-[1100px] mx-auto px-6 relative z-10 text-center flex flex-col items-center">
+                    <div className="inline-flex items-center gap-2 bg-amber-500/10 text-amber-400 rounded-full px-5 py-2 mb-6 font-bold text-[12px] md:text-[13px] tracking-[0.2em] uppercase border border-amber-500/20 backdrop-blur-md shadow-[0_0_20px_rgba(245,158,11,0.15)]">
+                        <Trophy size={14} className="text-amber-500" /> 6V6 VIETNAM OFFICIAL
+                    </div>
+                    <h1 className="text-[clamp(36px,8vw,72px)] font-black mb-5 leading-[1.05] tracking-tight text-white drop-shadow-2xl">
+                        Bảng Xếp Hạng <br className="hidden sm:block" />
+                        <span className="bg-clip-text text-transparent bg-gradient-to-r from-amber-200 via-yellow-400 to-amber-600 drop-shadow-none">Rankings</span>
+                    </h1>
+                    <p className="text-slate-300 max-w-[650px] mx-auto text-[15px] sm:text-[17px] font-medium leading-relaxed drop-shadow-md">
+                        {Array.isArray(allData) && allData.length > 0 ? `Vinh danh ${allData.length} cầu thủ xuất sắc nhất trên toàn quốc — nơi mọi trận đấu đều được ghi nhận.` : "Đang tải dữ liệu..."}
+                    </p>
 
-                            {/* Search */}
-                            <div className="relative max-w-xs w-full">
-                                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                                <input
-                                    type="text"
-                                    placeholder={isTeamMode ? "Tìm kiếm đội..." : "Tìm kiếm cầu thủ..."}
-                                    value={search}
-                                    onChange={(e) => setSearch(e.target.value)}
-                                    className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-efb-red/20 focus:border-efb-red transition-all"
-                                />
-                            </div>
-                        </div>
-
-                        {/* Mode description */}
-                        <div className="mt-3 flex items-center gap-2 text-xs text-gray-400">
-                            <Target className="w-3 h-3" />
-                            <span>{modeInfo.description} — Xếp hạng theo {isTeamMode ? "đội" : "cá nhân"}</span>
-                            <span className="mx-1">•</span>
-                            <span>{pagination.total} {isTeamMode ? "đội" : "cầu thủ"}</span>
-                        </div>
-                    </motion.div>
-
-                    {/* Loading */}
-                    {isLoading ? (
-                        <div className="py-20 flex flex-col items-center gap-3">
-                            <Loader2 className="w-8 h-8 animate-spin text-efb-red" />
-                            <p className="text-sm text-gray-400">Đang tải bảng xếp hạng...</p>
-                        </div>
-                    ) : rankings.length === 0 ? (
-                        /* Empty */
-                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-20">
-                            <div className="w-20 h-20 rounded-full bg-gray-50 flex items-center justify-center mx-auto mb-5">
-                                <Trophy className="w-9 h-9 text-gray-200" />
-                            </div>
-                            <h3 className="text-lg font-semibold text-gray-800 mb-1.5">Chưa có dữ liệu</h3>
-                            <p className="text-sm text-gray-400 max-w-sm mx-auto">
-                                {search ? `Không tìm thấy kết quả cho "${search}"` : "Chưa có giải đấu nào kết thúc ở chế độ này"}
-                            </p>
-                        </motion.div>
-                    ) : (
-                        <>
-                            {/* Top 3 Podium */}
-                            {page === 1 && top3.length >= 3 && !search && (
-                                <motion.div
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: 0.1 }}
-                                    className="grid grid-cols-3 gap-4 mb-8"
-                                >
-                                    {/* 2nd place */}
-                                    <div className="mt-6">
-                                        <PodiumCard entry={top3[1]} rank={2} isTeamMode={isTeamMode} activeMode={activeMode} />
-                                    </div>
-                                    {/* 1st place */}
-                                    <div>
-                                        <PodiumCard entry={top3[0]} rank={1} isTeamMode={isTeamMode} activeMode={activeMode} />
-                                    </div>
-                                    {/* 3rd place */}
-                                    <div className="mt-8">
-                                        <PodiumCard entry={top3[2]} rank={3} isTeamMode={isTeamMode} activeMode={activeMode} />
-                                    </div>
-                                </motion.div>
-                            )}
-
-                            {/* Rankings Table */}
-                            <motion.div
-                                initial={{ opacity: 0, y: 16 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 0.2 }}
-                                className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm"
+                    {/* ═══ MODE TABS (inside hero) ═══ */}
+                    <div className="mt-8 inline-flex bg-white/10 backdrop-blur-xl p-1 rounded-full border border-white/20 shadow-[0_4px_30px_rgba(0,0,0,0.3)]">
+                        {["1v1", "2v2", "3v3"].map(mode => (
+                            <button
+                                key={mode}
+                                onClick={() => {
+                                    setActiveMode(mode as any);
+                                    router.replace(`/bxh?filter=${mode}`, { scroll: false });
+                                }}
+                                className={`relative px-7 sm:px-10 py-2.5 rounded-full text-[13px] sm:text-[14px] font-bold tracking-wide transition-all duration-300 ${
+                                    activeMode === mode
+                                        ? "bg-white text-[#7A1414] shadow-lg"
+                                        : "text-white/60 hover:text-white"
+                                }`}
                             >
-                                {/* Table Header */}
-                                <div className="grid grid-cols-12 gap-2 px-5 py-3 bg-gray-50/80 text-[10px] uppercase tracking-wider font-semibold text-gray-400 border-b border-gray-100">
-                                    <div className="col-span-1 text-center">#</div>
-                                    <div className="col-span-4">{isTeamMode ? "Đội" : "Cầu thủ"}</div>
-                                    <div className="col-span-1 text-center">Giải</div>
-                                    <div className="col-span-1 text-center">Trận</div>
-                                    <div className="col-span-1 text-center">Thắng</div>
-                                    <div className="col-span-1 text-center">Thua</div>
-                                    <div className="col-span-1 text-center">HS</div>
-                                    <div className="col-span-2 text-center font-bold text-efb-red">Điểm</div>
-                                </div>
-
-                                {/* Table Rows */}
-                                <div className="divide-y divide-gray-50">
-                                    {(page === 1 && !search ? rest : rankings).map((entry, idx) => {
-                                        const rank = entry.rank;
-                                        return (
-                                            <motion.div
-                                                key={entry.user?._id || entry.teamName || idx}
-                                                initial={{ opacity: 0, x: -10 }}
-                                                animate={{ opacity: 1, x: 0 }}
-                                                transition={{ delay: idx * 0.02 }}
-                                                className={`grid grid-cols-12 gap-2 px-5 py-3 items-center hover:bg-gray-50/50 transition-colors ${rank <= 3 ? "bg-amber-50/20" : ""}`}
-                                            >
-                                                {/* Rank */}
-                                                <div className="col-span-1 text-center">
-                                                    {getRankIcon(rank)}
-                                                </div>
-
-                                                {/* Name */}
-                                                <div className="col-span-4 flex items-center gap-3">
-                                                    {isTeamMode ? (
-                                                        <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-efb-red to-efb-red-dark flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-                                                            {(entry.teamName || "?").charAt(0)}
-                                                        </div>
-                                                    ) : (
-                                                        entry.user?.avatar ? (
-                                                            <img src={entry.user.avatar} alt="" className="w-9 h-9 rounded-full object-cover border-2 border-gray-100 flex-shrink-0" />
-                                                        ) : (
-                                                            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-efb-red to-efb-red-dark flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
-                                                                {(entry.user?.name || "?").charAt(0)}
-                                                            </div>
-                                                        )
-                                                    )}
-                                                    <div className="min-w-0">
-                                                        <p className="text-sm font-semibold text-gray-900 truncate">
-                                                            {isTeamMode ? entry.teamName : (entry.user?.name || "N/A")}
-                                                        </p>
-                                                        {!isTeamMode && entry.user?.nickname && (
-                                                            <p className="text-[10px] text-gray-400 truncate">{entry.user.nickname}</p>
-                                                        )}
-                                                        {!isTeamMode && entry.user?.province && (
-                                                            <p className="text-[10px] text-gray-400 truncate">{entry.user.province}</p>
-                                                        )}
-                                                    </div>
-                                                </div>
-
-                                                {/* Stats */}
-                                                <div className="col-span-1 text-center text-xs text-gray-500">{entry.tournamentsPlayed}</div>
-                                                <div className="col-span-1 text-center text-xs text-gray-500">{entry.totalMatches}</div>
-                                                <div className="col-span-1 text-center text-xs font-medium text-emerald-600">{entry.totalWins + (entry.totalPenaltyWins || 0)}</div>
-                                                <div className="col-span-1 text-center text-xs font-medium text-red-500">{entry.totalLosses}</div>
-                                                <div className="col-span-1 text-center text-xs text-gray-500">
-                                                    <span className={entry.goalDifference > 0 ? "text-emerald-600" : entry.goalDifference < 0 ? "text-red-500" : ""}>
-                                                        {entry.goalDifference > 0 ? `+${entry.goalDifference}` : entry.goalDifference}
-                                                    </span>
-                                                </div>
-
-                                                {/* Points */}
-                                                <div className="col-span-2 text-center">
-                                                    <span className="inline-flex items-center gap-1 px-3 py-1 bg-gradient-to-r from-efb-red to-efb-red-light text-white text-sm font-bold rounded-lg shadow-sm">
-                                                        {entry.totalPoints}
-                                                    </span>
-                                                </div>
-                                            </motion.div>
-                                        );
-                                    })}
-                                </div>
-                            </motion.div>
-
-                            {/* Pagination */}
-                            {pagination.totalPages > 1 && (
-                                <div className="mt-8 flex items-center justify-center gap-2">
-                                    <button
-                                        onClick={() => setPage(p => Math.max(1, p - 1))}
-                                        disabled={page === 1}
-                                        className="flex items-center gap-1 h-10 px-4 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:text-efb-red hover:border-efb-red hover:bg-red-50 disabled:opacity-30 transition-all"
-                                    >
-                                        <ChevronLeft className="w-4 h-4" /> Trước
-                                    </button>
-                                    <span className="text-xs text-gray-400 px-3">
-                                        Trang <span className="font-bold text-gray-700">{page}</span> / <span className="font-bold text-gray-700">{pagination.totalPages}</span>
-                                    </span>
-                                    <button
-                                        onClick={() => setPage(p => Math.min(pagination.totalPages, p + 1))}
-                                        disabled={page === pagination.totalPages}
-                                        className="flex items-center gap-1 h-10 px-4 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:text-efb-red hover:border-efb-red hover:bg-red-50 disabled:opacity-30 transition-all"
-                                    >
-                                        Sau <ChevronRight className="w-4 h-4" />
-                                    </button>
-                                </div>
-                            )}
-                        </>
-                    )}
+                                {mode.toUpperCase()}
+                            </button>
+                        ))}
+                    </div>
                 </div>
             </section>
 
-            {/* Scroll to top */}
-            <AnimatePresence>
-                {showScrollTop && (
-                    <motion.button
-                        initial={{ opacity: 0, scale: 0.8 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.8 }}
-                        onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-                        className="fixed bottom-6 right-6 w-11 h-11 bg-efb-red text-white rounded-full shadow-lg flex items-center justify-center hover:bg-efb-red-light transition-colors z-40"
-                    >
-                        <ArrowUp className="w-5 h-5" />
-                    </motion.button>
-                )}
-            </AnimatePresence>
-        </div>
-    );
-}
-
-// Podium Card Component
-function PodiumCard({ entry, rank, isTeamMode, activeMode }: { entry: any; rank: number; isTeamMode: boolean; activeMode: GameMode }) {
-    const isFirst = rank === 1;
-    const gradients = {
-        1: "from-yellow-400/20 via-amber-50 to-yellow-100/50",
-        2: "from-gray-200/30 via-gray-50 to-gray-100/50",
-        3: "from-amber-600/10 via-orange-50 to-amber-100/30",
-    };
-
-    const borderColors = {
-        1: "border-yellow-300",
-        2: "border-gray-300",
-        3: "border-amber-500",
-    };
-
-    const crownColors = {
-        1: "text-yellow-400",
-        2: "text-gray-400",
-        3: "text-amber-600",
-    };
-
-    return (
-        <div className={`relative bg-gradient-to-b ${gradients[rank as 1 | 2 | 3]} border-2 ${borderColors[rank as 1 | 2 | 3]} rounded-2xl p-5 text-center ${isFirst ? "shadow-xl shadow-yellow-500/10" : "shadow-sm"}`}>
-            {/* Crown */}
-            <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                <div className={`w-8 h-8 rounded-full bg-white shadow-md flex items-center justify-center ${crownColors[rank as 1 | 2 | 3]}`}>
-                    {rank === 1 ? <Crown className="w-4 h-4" /> : <Medal className="w-4 h-4" />}
-                </div>
-            </div>
-
-            {/* Avatar */}
-            <div className="mt-3 mb-3 flex justify-center">
-                {isTeamMode ? (
-                    <div className={`${isFirst ? "w-16 h-16" : "w-12 h-12"} rounded-xl bg-gradient-to-br from-efb-red to-efb-red-dark flex items-center justify-center text-white font-bold ${isFirst ? "text-2xl" : "text-lg"}`}>
-                        {(entry.teamName || "?").charAt(0)}
+            {/* ═══ TOP 3 PODIUM — solid bright cards ═══ */}
+            {!search.trim() && top3.length >= 3 && (
+                <section className="pb-8 -mt-16 lg:-mt-24 relative z-20">
+                    <div className="max-w-[920px] mx-auto px-6">
+                        <div className="flex items-end justify-center gap-2 sm:gap-4">
+                            {[1, 0, 2].map((oi, vi) => {
+                                const p = top3[oi];
+                                const configs = [
+                                    { bg: "bg-gradient-to-b from-yellow-300 via-yellow-400 to-amber-500", textMain: "text-amber-950", textSub: "text-amber-900/60", h: "h-[180px] sm:h-[240px]", shadow: "shadow-[0_8px_40px_rgba(250,204,21,0.35)]" },
+                                    { bg: "bg-gradient-to-b from-slate-100 via-slate-200 to-slate-400", textMain: "text-slate-800", textSub: "text-slate-600/70", h: "h-[155px] sm:h-[200px]", shadow: "shadow-[0_8px_30px_rgba(148,163,184,0.25)]" },
+                                    { bg: "bg-gradient-to-b from-amber-400 via-amber-500 to-amber-700", textMain: "text-amber-100", textSub: "text-amber-200/60", h: "h-[145px] sm:h-[190px]", shadow: "shadow-[0_8px_30px_rgba(217,119,6,0.25)]" },
+                                ];
+                                const c = configs[oi];
+                                return (
+                                    <div key={oi} className={`flex-1 min-w-0 ${vi === 1 ? "order-2" : vi === 0 ? "order-1" : "order-3"}`}>
+                                        <div className={`${c.bg} ${c.shadow} ${c.h} rounded-xl sm:rounded-2xl px-2 sm:px-5 py-3 sm:py-5 text-center flex flex-col items-center justify-end relative overflow-hidden transition-transform hover:-translate-y-2`}>
+                                            {p.user?.avatar ? (
+                                                <img src={p.user?.avatar} alt={p.user?.name} className="w-10 h-10 sm:w-14 sm:h-14 rounded-full object-cover border-2 border-white/50 shadow-md mb-1 sm:mb-2" />
+                                            ) : (
+                                                <span className={`text-2xl sm:text-5xl mb-1 sm:mb-2 drop-shadow-sm`}>{["🥇", "🥈", "🥉"][oi]}</span>
+                                            )}
+                                            <h3 className={`font-semibold tracking-tight text-[11px] sm:text-[15px] ${c.textMain} truncate w-full`}>{p.user?.nickname || p.user?.name}</h3>
+                                            <div className={`font-bold tracking-tight text-lg sm:text-3xl ${c.textMain} leading-tight`}>{String(p.totalPoints)}</div>
+                                            <span className={`text-[7px] sm:text-[9px] ${c.textSub} font-medium tracking-[0.05em] uppercase`}>ĐIỂM</span>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
                     </div>
-                ) : entry.user?.avatar ? (
-                    <img src={entry.user.avatar} alt="" className={`${isFirst ? "w-16 h-16" : "w-12 h-12"} rounded-full object-cover border-2 border-white shadow-md`} />
-                ) : (
-                    <div className={`${isFirst ? "w-16 h-16" : "w-12 h-12"} rounded-full bg-gradient-to-br from-efb-red to-efb-red-dark flex items-center justify-center text-white font-bold ${isFirst ? "text-2xl" : "text-lg"}`}>
-                        {(entry.user?.name || "?").charAt(0)}
-                    </div>
-                )}
-            </div>
-
-            {/* Name */}
-            <h3 className={`font-bold text-gray-900 truncate ${isFirst ? "text-base" : "text-sm"}`}>
-                {isTeamMode ? entry.teamName : (entry.user?.name || "N/A")}
-            </h3>
-            {!isTeamMode && entry.user?.nickname && (
-                <p className="text-[10px] text-gray-400 truncate">{entry.user.nickname}</p>
+                </section>
             )}
 
-            {/* Points */}
-            <div className="mt-3">
-                <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-gradient-to-r from-efb-red to-efb-red-light text-white font-bold text-sm rounded-lg shadow-md">
-                    <TrendingUp className="w-3 h-3" />
-                    {entry.totalPoints} điểm
-                </span>
-            </div>
+            {/* ═══ SEARCH + CONTROLS ═══ */}
+            <section className="pb-4 mt-6">
+                <div className="max-w-[920px] mx-auto px-6">
+                    {/* Stats row */}
+                    <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 sm:gap-3 mb-4 sm:justify-center">
+                        {[
+                            { icon: Users, label: "Tổng VĐV", value: Array.isArray(allData) ? allData.length : 0, color: "bg-blue-500 text-white" },
+                            { icon: Trophy, label: "Top Điểm", value: Array.isArray(allData) && allData[0] ? String(allData[0].totalPoints) : "—", color: "bg-amber-500 text-white" },
+                            { icon: Gamepad2, label: "Kết quả", value: Array.isArray(filtered) ? filtered.length : 0, color: "bg-violet-500 text-white" },
+                            { icon: Award, label: "Trang", value: `${currentPage}/${totalPages}`, color: "bg-emerald-500 text-white" },
+                        ].map((s, i) => (
+                            <div key={i} className={`${s.color} rounded-xl px-4 py-2.5 flex items-center gap-2 shadow-lg border border-white/20 hover:-translate-y-0.5 transition-transform`}>
+                                <s.icon size={16} strokeWidth={2} />
+                                <span className="font-semibold text-[15px] tracking-tight">{String(s.value)}</span>
+                                <span className="text-[11px] opacity-90 font-medium tracking-wide">{s.label}</span>
+                            </div>
+                        ))}
+                    </div>
 
-            {/* Mini stats */}
-            <div className="mt-3 grid grid-cols-3 gap-1 text-[10px]">
-                <div>
-                    <p className="font-bold text-gray-700">{entry.totalMatches}</p>
-                    <p className="text-gray-400">Trận</p>
+                    {/* Search + per page */}
+                    <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center mt-6">
+                        <div className="relative flex-1">
+                            <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                            <input
+                                type="text"
+                                placeholder="Tìm tên, nickname, team, ID..."
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                                className="w-full bg-white rounded-xl pl-11 pr-4 py-3 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-efb-blue shadow-md border border-slate-200 transition-all"
+                            />
+                        </div>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                            {PER_PAGE_OPTIONS.map((n) => (
+                                <button
+                                    key={n}
+                                    onClick={() => setPerPage(n)}
+                                    className={`px-4 py-2.5 rounded-xl text-[12px] font-bold transition-all shadow-sm border ${perPage === n
+                                        ? "bg-blue-600 text-white border-blue-600 shadow-blue-200"
+                                        : "bg-white text-slate-500 hover:bg-slate-100 border-slate-200"
+                                        }`}
+                                >
+                                    {n}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
                 </div>
-                <div>
-                    <p className="font-bold text-emerald-600">{entry.totalWins}</p>
-                    <p className="text-gray-400">Thắng</p>
+            </section>
+
+            {/* ═══ LEADERBOARD — solid white cards ═══ */}
+            <section className="pb-24">
+                <div className="max-w-[920px] mx-auto px-6">
+
+                    {loading ? (
+                        <div className="bg-white rounded-2xl py-20 text-center shadow-xl border border-slate-200">
+                            <div className="w-12 h-12 border-4 border-slate-200 border-t-blue-500 rounded-full animate-spin mx-auto mb-4" />
+                            <p className="text-slate-500 font-medium">Đang tải dữ liệu...</p>
+                        </div>
+                    ) : paged.length === 0 ? (
+                        <div className="bg-white rounded-2xl py-20 text-center shadow-xl border border-slate-200">
+                            <Search size={36} className="mx-auto mb-4 text-slate-300" />
+                            <p className="text-lg text-slate-500 font-semibold">Không tìm thấy kết quả</p>
+                            <p className="text-sm text-slate-400 mt-1">Thử từ khóa khác</p>
+                        </div>
+                    ) : (
+                        <div className="bg-white rounded-2xl overflow-hidden shadow-xl border border-slate-200">
+                            {/* Table header */}
+                            <div className="hidden md:grid grid-cols-[55px_120px_1fr_120px_120px_90px_45px_45px] px-5 py-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-slate-50 border-b border-slate-100">
+                                <span className="text-center">#</span>
+                                <span>EFV ID</span>
+                                <span>Họ Tên VĐV</span>
+                                <span>Team</span>
+                                <span>Nickname</span>
+                                <span className="text-right">Điểm</span>
+                                <span className="text-center">FB</span>
+                                <span className="text-center">Xem</span>
+                            </div>
+
+                            {/* Rows */}
+                            {paged.map((p, idx) => {
+                                const r = Number(p.rank);
+                                const isTop1 = r === 1;
+                                const isTop2 = r === 2;
+                                const isTop3 = r === 3;
+
+                                const rowBg =
+                                    isTop1 ? "bg-gradient-to-r from-yellow-50 via-amber-50 to-white" :
+                                        isTop2 ? "bg-gradient-to-r from-slate-50 to-white" :
+                                            isTop3 ? "bg-gradient-to-r from-amber-50/60 to-white" :
+                                                idx % 2 === 0 ? "bg-white" : "bg-slate-50/70";
+
+                                return (
+                                    <div
+                                        key={p.user?._id || idx}
+                                        className={`${rowBg} border-b border-slate-100 last:border-b-0 hover:bg-blue-50/50 transition-colors inline-block w-full`}
+                                    >
+                                        {/* Desktop */}
+                                        <div className="hidden md:grid grid-cols-[55px_120px_1fr_120px_120px_90px_45px_45px] px-5 py-3.5 items-center group">
+                                            {/* Rank */}
+                                            <div className="flex justify-center">
+                                                {isTop1 ? (
+                                                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-yellow-400 to-amber-600 flex items-center justify-center shadow-md">
+                                                        <Crown size={14} className="text-white" />
+                                                    </div>
+                                                ) : isTop2 ? (
+                                                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-slate-300 to-slate-500 flex items-center justify-center shadow-md">
+                                                        <Medal size={14} className="text-white" />
+                                                    </div>
+                                                ) : isTop3 ? (
+                                                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-400 to-amber-700 flex items-center justify-center shadow-md">
+                                                        <Medal size={14} className="text-white" />
+                                                    </div>
+                                                ) : r > 0 ? (
+                                                    <span className="text-[14px] font-bold text-slate-400">{r}</span>
+                                                ) : (
+                                                    <span className="text-[14px] font-bold text-slate-300">-</span>
+                                                )}
+                                            </div>
+                                            {/* ID */}
+                                            <span className="text-[12px] text-indigo-500 font-mono font-medium truncate pr-2">{p.user?.playerId}</span>
+                                            {/* Name + Avatar */}
+                                            <div className="flex items-center gap-2.5 pr-2 min-w-0">
+                                                {p.user?.avatar ? (
+                                                    <img src={p.user?.avatar} alt={p.user?.name} className="w-8 h-8 rounded-lg object-cover flex-shrink-0 border border-slate-200" />
+                                                ) : (
+                                                    <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400 font-bold text-xs flex-shrink-0">
+                                                        {p.user?.name?.charAt(0) || "?"}
+                                                    </div>
+                                                )}
+                                                <p className="font-semibold text-[14px] text-slate-800 truncate group-hover:text-blue-600 transition-colors">
+                                                    {p.user?.name}
+                                                </p>
+                                            </div>
+                                            {/* Team */}
+                                            <div className="pr-2">
+                                                {p.teamName ? (
+                                                    <span className="text-[11px] bg-indigo-50 text-indigo-600 px-2 py-1 rounded-full font-medium border border-indigo-100 block truncate text-center">{p.teamName}</span>
+                                                ) : (
+                                                    <span className="text-slate-300 text-[11px]">—</span>
+                                                )}
+                                            </div>
+                                            {/* Nickname */}
+                                            <span className="text-[13px] text-slate-600 font-medium truncate pr-2">{p.user?.nickname || "—"}</span>
+                                            {/* Points */}
+                                            <div className="text-right">
+                                                <span className={`font-extrabold text-[16px] ${isTop1 ? "text-amber-600" :
+                                                    isTop2 ? "text-slate-600" :
+                                                        isTop3 ? "text-amber-700" :
+                                                            "text-slate-800"
+                                                    }`}>{String(p.totalPoints)}</span>
+                                            </div>
+                                            {/* FB */}
+                                            <div className="flex justify-center">
+                                                {p.facebook ? (
+                                                    <a href={String(p.facebook)} target="_blank" rel="noopener" onClick={(e) => e.stopPropagation()} className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-500 hover:bg-blue-100 hover:scale-110 transition-all border border-blue-100">
+                                                        <ExternalLink size={13} />
+                                                    </a>
+                                                ) : (
+                                                    <span className="text-slate-200">—</span>
+                                                )}
+                                            </div>
+                                            {/* Profile */}
+                                            <div className="flex justify-center">
+                                                <Link
+                                                    href={`/profile/${p.user?.playerId || p.user?._id}`}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                    className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-500 hover:bg-emerald-100 hover:scale-110 transition-all border border-emerald-100"
+                                                    title="Xem hồ sơ"
+                                                >
+                                                    <Eye size={13} />
+                                                </Link>
+                                            </div>
+                                        </div>
+
+                                        {/* Mobile */}
+                                        <div className="md:hidden px-4 py-3.5 flex flex-col w-full">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 shrink-0 flex justify-center">
+                                                    {isTop1 ? (
+                                                        <div className="w-10 h-10 rounded-full flex items-center justify-center shadow-md text-white bg-gradient-to-br from-yellow-400 to-amber-600">
+                                                            <Crown size={18} />
+                                                        </div>
+                                                    ) : isTop2 ? (
+                                                        <div className="w-10 h-10 rounded-full flex items-center justify-center shadow-md text-white bg-gradient-to-br from-slate-300 to-slate-500">
+                                                            <Medal size={18} />
+                                                        </div>
+                                                    ) : isTop3 ? (
+                                                        <div className="w-10 h-10 rounded-full flex items-center justify-center shadow-md text-white bg-gradient-to-br from-amber-400 to-amber-700">
+                                                            <Medal size={18} />
+                                                        </div>
+                                                    ) : r > 0 ? (
+                                                        <span className="text-[16px] font-bold text-slate-400 text-center w-full">{r}</span>
+                                                    ) : (
+                                                        <span className="text-[16px] font-bold text-slate-300 text-center w-full">-</span>
+                                                    )}
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-center gap-2">
+                                                        {p.user?.avatar ? (
+                                                            <img src={p.user?.avatar} alt={p.user?.name} className="w-7 h-7 rounded-lg object-cover flex-shrink-0 border border-slate-200" />
+                                                        ) : (
+                                                            <div className="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400 font-bold text-[10px] flex-shrink-0">
+                                                                {p.user?.name?.charAt(0) || "?"}
+                                                            </div>
+                                                        )}
+                                                        <p className="font-bold text-[14px] text-slate-800 truncate leading-tight">
+                                                            {p.user?.name} {p.user?.nickname ? <span className="text-slate-500 font-normal">({p.user?.nickname})</span> : ""}
+                                                        </p>
+                                                    </div>
+                                                    <div className="flex items-center gap-2 flex-wrap mt-1">
+                                                        <span className="text-[10px] text-indigo-500 font-mono bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100">{p.user?.playerId}</span>
+                                                        {p.teamName && <span className="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-medium">{p.teamName}</span>}
+                                                    </div>
+                                                </div>
+                                                <div className="text-right shrink-0 flex items-center gap-2">
+                                                    <div>
+                                                        <span className={`font-extrabold text-[18px] ${r <= 3 ? "text-amber-600" : "text-slate-800"}`}>{String(p.totalPoints)}</span>
+                                                        <p className="text-[8px] text-slate-400 uppercase tracking-widest">ĐIỂM</p>
+                                                    </div>
+                                                    <Link
+                                                        href={`/profile/${p.user?.playerId || p.user?._id}`}
+                                                        onClick={(e) => e.stopPropagation()}
+                                                        className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-500 hover:bg-emerald-100 transition-all border border-emerald-100 flex-shrink-0"
+                                                        title="Xem hồ sơ"
+                                                    >
+                                                        <Eye size={14} />
+                                                    </Link>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+
+                            {/* Pagination inside card */}
+                            <div className="flex flex-col sm:flex-row items-center justify-between px-5 py-4 bg-slate-50 border-t border-slate-100 gap-3">
+                                <p className="text-[12px] text-slate-400 font-medium">
+                                    <span className="text-slate-700 font-bold">{(currentPage - 1) * perPage + 1}–{Math.min(currentPage * perPage, Array.isArray(filtered) ? filtered.length : 0)}</span> / {Array.isArray(filtered) ? filtered.length : 0} VĐV
+                                </p>
+                                <div className="flex items-center gap-1 sm:gap-1.5 flex-wrap justify-center">
+                                    <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={currentPage <= 1}
+                                        className="w-9 h-9 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-100 disabled:opacity-25 transition-all shadow-sm">
+                                        <ChevronLeft size={16} />
+                                    </button>
+                                    {pageRange[0] > 1 && (
+                                        <>
+                                            <button onClick={() => setPage(1)} className="w-9 h-9 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-[12px] font-bold text-slate-500 hover:bg-slate-100 transition-all shadow-sm">1</button>
+                                            {pageRange[0] > 2 && <span className="text-slate-300 px-0.5">⋯</span>}
+                                        </>
+                                    )}
+                                    {pageRange.map((n) => (
+                                        <button key={n} onClick={() => setPage(n)}
+                                            className={`w-9 h-9 rounded-lg flex items-center justify-center text-[12px] font-bold transition-all shadow-sm ${n === currentPage ? "bg-blue-600 text-white shadow-blue-200" : "bg-white border border-slate-200 text-slate-500 hover:bg-slate-100"
+                                                }`}>
+                                            {n}
+                                        </button>
+                                    ))}
+                                    {pageRange[pageRange.length - 1] < totalPages && (
+                                        <>
+                                            {pageRange[pageRange.length - 1] < totalPages - 1 && <span className="text-slate-300 px-0.5">⋯</span>}
+                                            <button onClick={() => setPage(totalPages)} className="w-9 h-9 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-[12px] font-bold text-slate-500 hover:bg-slate-100 transition-all shadow-sm">{totalPages}</button>
+                                        </>
+                                    )}
+                                    <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={currentPage >= totalPages}
+                                        className="w-9 h-9 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-100 disabled:opacity-25 transition-all shadow-sm">
+                                        <ChevronRight size={16} />
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
-                <div>
-                    <p className="font-bold text-gray-700">{entry.tournamentsPlayed}</p>
-                    <p className="text-gray-400">Giải</p>
-                </div>
-            </div>
-        </div>
+            </section >
+
+                    </div>
     );
 }

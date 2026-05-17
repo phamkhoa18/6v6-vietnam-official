@@ -38,7 +38,7 @@ export default function AdminUsersPage() {
                 </div>
                 <div className="relative w-full sm:w-72">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                    <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Tìm tên, email..." className="pl-9 h-10 rounded-xl" />
+                    <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Tìm tên, email..." className="pl-9 h-10" />
                 </div>
             </div>
 

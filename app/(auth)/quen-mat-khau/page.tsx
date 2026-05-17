@@ -83,7 +83,7 @@ export default function QuenMatKhauPage() {
         finally { setIsSubmitting(false); }
     };
 
-    const inputCls = "pl-10 h-12 rounded-xl border-gray-200 bg-gray-50/50 focus:bg-white focus:border-efb-red focus:ring-efb-red/20 transition-all text-sm";
+    const inputCls = "pl-10 h-12 border-gray-200 bg-gray-50/50 focus:bg-white focus:border-efb-red focus:ring-efb-red/20 transition-all text-sm";
 
     return (
         <div className="min-h-screen flex">
@@ -163,7 +163,7 @@ export default function QuenMatKhauPage() {
                                         <Label className="text-sm font-medium text-efb-dark">Mật khẩu mới</Label>
                                         <div className="relative">
                                             <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-efb-text-muted" />
-                                            <Input type={showPassword ? "text" : "password"} placeholder="Tối thiểu 8 ký tự" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="pl-10 pr-10 h-12 rounded-xl border-gray-200 bg-gray-50/50 focus:bg-white focus:border-efb-red focus:ring-efb-red/20 transition-all text-sm" required disabled={isSubmitting} />
+                                            <Input type={showPassword ? "text" : "password"} placeholder="Tối thiểu 8 ký tự" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="pl-10 pr-10 h-12 border-gray-200 bg-gray-50/50 focus:bg-white focus:border-efb-red focus:ring-efb-red/20 transition-all text-sm" required disabled={isSubmitting} />
                                             <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-efb-text-muted hover:text-efb-text-secondary transition-colors">
                                                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                                             </button>
@@ -181,7 +181,7 @@ export default function QuenMatKhauPage() {
                                         <Label className="text-sm font-medium text-efb-dark">Xác nhận mật khẩu</Label>
                                         <div className="relative">
                                             <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-efb-text-muted" />
-                                            <Input type={showPassword ? "text" : "password"} placeholder="Nhập lại mật khẩu mới" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="pl-10 h-12 rounded-xl border-gray-200 bg-gray-50/50 focus:bg-white focus:border-efb-red focus:ring-efb-red/20 transition-all text-sm" required disabled={isSubmitting} />
+                                            <Input type={showPassword ? "text" : "password"} placeholder="Nhập lại mật khẩu mới" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="pl-10 h-12 border-gray-200 bg-gray-50/50 focus:bg-white focus:border-efb-red focus:ring-efb-red/20 transition-all text-sm" required disabled={isSubmitting} />
                                             {confirmPassword && newPassword === confirmPassword && <CheckCircle2 className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-500" />}
                                         </div>
                                     </div>

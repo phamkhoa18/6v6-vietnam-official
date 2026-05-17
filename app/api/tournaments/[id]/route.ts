@@ -105,3 +105,49 @@ export async function PUT(
         );
     }
 }
+
+// DELETE /api/tournaments/[id]
+export async function DELETE(
+    req: NextRequest,
+    { params }: { params: Promise<{ id: string }> }
+) {
+    try {
+        await dbConnect();
+        const { id } = await params;
+        const user = await getCurrentUser(req);
+        if (!user || (user.role !== "admin" && user.role !== "manager")) {
+            return NextResponse.json(
+                { success: false, message: "Không có quyền xóa" },
+                { status: 403 }
+            );
+        }
+
+        const tournament = await Tournament.findById(id);
+        if (!tournament) {
+            return NextResponse.json(
+                { success: false, message: "Không tìm thấy giải đấu" },
+                { status: 404 }
+            );
+        }
+
+        // Only creator or admin can delete
+        if (user.role !== "admin" && tournament.createdBy.toString() !== user._id.toString()) {
+            return NextResponse.json(
+                { success: false, message: "Không có quyền xóa giải đấu này" },
+                { status: 403 }
+            );
+        }
+
+        await Tournament.findByIdAndDelete(id);
+
+        return NextResponse.json({
+            success: true,
+            message: "Đã xóa giải đấu",
+        });
+    } catch (error: any) {
+        return NextResponse.json(
+            { success: false, message: error.message },
+            { status: 500 }
+        );
+    }
+}
