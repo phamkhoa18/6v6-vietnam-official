@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { tournamentAPI, uploadImage } from "@/lib/api";
 import { toast } from "sonner";
+import { useConfirmDialog } from "@/components/ui/confirm-dialog";
 
 const statusConfig: Record<string, { label: string; bg: string; next?: string; nextLabel?: string }> = {
     draft: { label: "NHÁP", bg: "bg-gray-100 text-gray-600", next: "registration", nextLabel: "Mở đăng ký" },
@@ -129,9 +130,19 @@ export default function TournamentOverview() {
         }
     }, [id]);
 
+    const confirmDialog = useConfirmDialog();
+
     /* ===== Status Update ===== */
     const handleStatusChange = async (newStatus: string) => {
-        if (!confirm(`Chuyển trạng thái giải đấu sang "${statusConfig[newStatus]?.label}"?`)) return;
+        const isConfirmed = await confirmDialog.confirm({
+            title: "Cập nhật trạng thái",
+            description: `Chuyển trạng thái giải đấu sang "${statusConfig[newStatus]?.label}"?`,
+            confirmText: "Chuyển",
+            cancelText: "Hủy bỏ",
+            variant: "info"
+        });
+        if (!isConfirmed) return;
+        
         setIsUpdatingStatus(true);
         try {
             const res = await tournamentAPI.updateStatus(id, newStatus);
@@ -191,6 +202,7 @@ export default function TournamentOverview() {
     const quickActions = [
         { label: "Đăng ký thi đấu", href: `/manager/giai-dau/${id}/dang-ky`, icon: Users, color: "text-blue-600", bg: "bg-blue-50", desc: `${participants.length} đã đăng ký` },
         { label: "Lịch thi đấu", href: `/manager/giai-dau/${id}/lich`, icon: Calendar, color: "text-emerald-600", bg: "bg-emerald-50", desc: `${matches.length} trận đấu` },
+        { label: "Video Highlight", href: `/manager/giai-dau/${id}/video`, icon: PlayCircle, color: "text-indigo-600", bg: "bg-indigo-50", desc: `${tournament.videos?.length || 0} video` },
         { label: "Cài đặt giải đấu", href: `/manager/giai-dau/${id}/cai-dat`, icon: Settings, color: "text-purple-600", bg: "bg-purple-50", desc: "Chỉnh sửa thông tin" },
     ];
 
@@ -310,7 +322,7 @@ export default function TournamentOverview() {
             {/* Quick Actions */}
             <div className="bg-white rounded-2xl border border-gray-100 p-6">
                 <h2 className="text-base font-semibold text-gray-900 mb-4">Truy cập nhanh</h2>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     {quickActions.map((action, i) => (
                         <Link key={i} href={action.href}>
                             <motion.div whileHover={{ y: -2 }} className="p-4 rounded-xl border border-gray-100 flex items-center gap-4 hover:border-gray-200 hover:shadow-sm transition-all cursor-pointer">

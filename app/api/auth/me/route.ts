@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
             _id: user._id, playerId: user.playerId, name: user.name, email: user.email, role: user.role,
             avatar: user.avatar, phone: user.phone, bio: user.bio, jerseyNumber: user.jerseyNumber,
             dateOfBirth: user.dateOfBirth, country: user.country, province: user.province,
-            nickname: user.nickname, teamName: user.teamName,
+            teamName: user.teamName,
             facebookName: user.facebookName, facebookLink: user.facebookLink,
             stats: user.stats, isActive: user.isActive, lastLogin: user.lastLogin, createdAt: user.createdAt,
         });
@@ -35,7 +35,7 @@ export async function PUT(req: NextRequest) {
 
         await dbConnect();
         const body = await req.json();
-        const { name, phone, bio, jerseyNumber, avatar, dateOfBirth, country, province, nickname, teamName, facebookName, facebookLink } = body;
+        const { name, phone, bio, jerseyNumber, avatar, dateOfBirth, country, province, teamName, facebookName, facebookLink } = body;
 
         const user = await User.findByIdAndUpdate(
             authResult.user._id,
@@ -44,7 +44,7 @@ export async function PUT(req: NextRequest) {
                 ...(bio !== undefined && { bio }), ...(jerseyNumber !== undefined && { jerseyNumber }),
                 ...(avatar !== undefined && { avatar }), ...(dateOfBirth !== undefined && { dateOfBirth }),
                 ...(country !== undefined && { country }), ...(province !== undefined && { province }),
-                ...(nickname !== undefined && { nickname }), ...(teamName !== undefined && { teamName }),
+                ...(teamName !== undefined && { teamName }),
                 ...(facebookName !== undefined && { facebookName }), ...(facebookLink !== undefined && { facebookLink }),
             },
             { new: true, runValidators: true }
@@ -56,7 +56,7 @@ export async function PUT(req: NextRequest) {
             _id: user._id, playerId: user.playerId, name: user.name, email: user.email, role: user.role,
             avatar: user.avatar, phone: user.phone, bio: user.bio, jerseyNumber: user.jerseyNumber,
             dateOfBirth: user.dateOfBirth, country: user.country, province: user.province,
-            nickname: user.nickname, teamName: user.teamName,
+            teamName: user.teamName,
             facebookName: user.facebookName, facebookLink: user.facebookLink, stats: user.stats,
         }, 200, "Cập nhật thành công");
     } catch (error: any) {

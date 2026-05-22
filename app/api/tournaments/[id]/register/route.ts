@@ -27,6 +27,12 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
             return apiError("Giải đấu chưa mở đăng ký", 400);
         }
 
+        const maxSlots = tournament.maxSlots || (tournament as any).maxTeams || 0;
+        const currentSlots = tournament.currentSlots || (tournament as any).currentTeams || 0;
+        if (maxSlots > 0 && currentSlots >= maxSlots) {
+            return apiError("Giải đấu đã đầy slot đăng ký", 400);
+        }
+
         // Check if already registered
         const existing = await Registration.findOne({
             tournament: id,
@@ -47,20 +53,74 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
             teamName: body.teamName,
             teamShortName: body.teamShortName,
             teamLogo: body.teamLogo,
+            teamLineupPhoto: body.teamLineupPhoto,
             status: "pending",
+
+            facebookName: body.facebookName,
+            facebookLink: body.facebookLink,
+            province: body.province,
+            notes: body.notes,
+
+            player2Name: body.player2Name,
+            player2FacebookName: body.player2FacebookName,
+            player2FacebookLink: body.player2FacebookLink,
+
+            player3Name: body.player3Name,
+            player3FacebookName: body.player3FacebookName,
+            player3FacebookLink: body.player3FacebookLink,
         };
 
         // Validate teammates for 2v2/3v3
         if (tournament.gameMode === "2v2" || tournament.gameMode === "3v3") {
-            if (body.player2Id) {
-                const p2 = await User.findById(body.player2Id);
+            const p2Id = body.player2Id || body.player2UserId;
+            if (p2Id) {
+                // Check: cannot add yourself as teammate
+                if (p2Id === authResult.user._id.toString()) {
+                    return apiError("Không thể thêm chính mình làm đồng đội", 400);
+                }
+                const p2 = await User.findById(p2Id);
                 if (!p2) return apiError("Đồng đội 2 không tồn tại trên hệ thống", 400);
-                regData.player2 = body.player2Id;
+
+                // Check: player2 must not be already registered in this tournament
+                const p2Reg = await Registration.findOne({
+                    tournament: id,
+                    status: { $nin: ["rejected", "withdrawn"] },
+                    $or: [
+                        { user: p2Id },
+                        { player2: p2Id },
+                        { player3: p2Id },
+                    ],
+                });
+                if (p2Reg) return apiError(`${p2.name} đã tham gia đội khác trong giải này`, 400);
+
+                regData.player2 = p2Id;
             }
-            if (tournament.gameMode === "3v3" && body.player3Id) {
-                const p3 = await User.findById(body.player3Id);
+            const p3Id = body.player3Id || body.player3UserId;
+            if (tournament.gameMode === "3v3" && p3Id) {
+                // Check: cannot add yourself as teammate
+                if (p3Id === authResult.user._id.toString()) {
+                    return apiError("Không thể thêm chính mình làm đồng đội", 400);
+                }
+                // Check: p3 must not be same as p2
+                if (p2Id && p3Id === p2Id) {
+                    return apiError("VĐV 2 và VĐV 3 không thể là cùng một người", 400);
+                }
+                const p3 = await User.findById(p3Id);
                 if (!p3) return apiError("Đồng đội 3 không tồn tại trên hệ thống", 400);
-                regData.player3 = body.player3Id;
+
+                // Check: player3 must not be already registered in this tournament
+                const p3Reg = await Registration.findOne({
+                    tournament: id,
+                    status: { $nin: ["rejected", "withdrawn"] },
+                    $or: [
+                        { user: p3Id },
+                        { player2: p3Id },
+                        { player3: p3Id },
+                    ],
+                });
+                if (p3Reg) return apiError(`${p3.name} đã tham gia đội khác trong giải này`, 400);
+
+                regData.player3 = p3Id;
             }
         }
 
@@ -73,7 +133,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
             recipient: admin._id,
             type: "registration",
             title: "Đăng ký mới",
-            message: `${regData.playerName} đã đăng ký giải ${tournament.name}`,
+            message: `${regData.playerName} đã đăng ký giải ${tournament.title}`,
             link: `/manager/giai-dau/${id}/dang-ky`,
         }));
         if (notifs.length > 0) await Notification.insertMany(notifs);
@@ -93,11 +153,26 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
         if (authResult instanceof Response) return apiResponse(null, 200);
 
         const { id } = await params;
-        const reg = await Registration.findOne({
+        const userId = authResult.user._id;
+
+        // Check as captain (main registrant)
+        let reg = await Registration.findOne({
             tournament: id,
-            user: authResult.user._id,
+            user: userId,
             status: { $nin: ["rejected", "withdrawn"] },
         }).lean();
+
+        // Also check if registered as player2 or player3 in someone else's team
+        if (!reg) {
+            reg = await Registration.findOne({
+                tournament: id,
+                status: { $nin: ["rejected", "withdrawn"] },
+                $or: [
+                    { player2: userId },
+                    { player3: userId },
+                ],
+            }).lean();
+        }
 
         return apiResponse(reg);
     } catch (error: any) {

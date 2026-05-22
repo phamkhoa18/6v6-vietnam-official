@@ -187,14 +187,8 @@ export default function TournamentSettings() {
                 <Field label="Tags"><Input value={tags} onChange={e => setTags(e.target.value)} placeholder="football, 6v6, hanoi" className="h-10" /></Field>
                 <div className="grid grid-cols-2 gap-4">
                     <Field label="Số đội tối đa"><Input value={maxSlots} onChange={e => setMaxSlots(e.target.value)} type="number" className="h-10" /></Field>
-                    <Field label="Hình thức">
-                        <div className="flex gap-2">
-                            <button type="button" onClick={() => setIsOnline(false)} className={`flex-1 py-2.5 rounded-xl text-xs font-medium border-2 ${!isOnline ? "border-efb-red bg-red-50 text-efb-red" : "border-gray-200 text-gray-500"}`}>Offline</button>
-                            <button type="button" onClick={() => setIsOnline(true)} className={`flex-1 py-2.5 rounded-xl text-xs font-medium border-2 ${isOnline ? "border-efb-red bg-red-50 text-efb-red" : "border-gray-200 text-gray-500"}`}>Online</button>
-                        </div>
-                    </Field>
+                    <Field label="Địa điểm (Sân thi đấu)"><Input value={location} onChange={e => setLocation(e.target.value)} className="h-10" /></Field>
                 </div>
-                {!isOnline && <Field label="Địa điểm"><Input value={location} onChange={e => setLocation(e.target.value)} className="h-10" /></Field>}
                 <div className="flex items-center gap-3">
                     <input type="checkbox" id="isPublic" checked={isPublic} onChange={e => setIsPublic(e.target.checked)} className="rounded border-gray-300 text-efb-red" />
                     <label htmlFor="isPublic" className="text-xs text-gray-600 font-medium">Công khai giải đấu</label>

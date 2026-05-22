@@ -16,6 +16,7 @@ export interface IUser extends Document {
     country?: string;
     province?: string;
     nickname?: string;
+    gamerId?: string;
     teamName?: string;
     facebookName?: string;
     facebookLink?: string;
@@ -100,6 +101,10 @@ const UserSchema = new Schema<IUser>(
             default: "",
         },
         nickname: {
+            type: String,
+            default: "",
+        },
+        gamerId: {
             type: String,
             default: "",
         },

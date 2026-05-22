@@ -31,7 +31,7 @@ export async function GET() {
             logoDark: s.logoDark || "",
             favicon: s.favicon || "",
             appleTouchIcon: s.appleTouchIcon || "",
-            ogImage: s.ogImage || "/assets/efootball_bg.webp",
+            ogImage: s.ogImage || "",
 
             // SEO
             seoTitle: s.seoTitle || "",

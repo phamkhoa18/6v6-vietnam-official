@@ -46,6 +46,7 @@ export async function POST(
         // Calculate points
         const scoring = {
             pointsPerWin: tournament.scoring?.pointsPerWin ?? 3,
+            pointsPerDraw: tournament.scoring?.pointsPerDraw ?? 1,
             pointsPerPenaltyWin: tournament.scoring?.pointsPerPenaltyWin ?? 2,
             pointsPerPenaltyLoss: tournament.scoring?.pointsPerPenaltyLoss ?? 1,
             pointsPerLoss: tournament.scoring?.pointsPerLoss ?? 0,
@@ -98,6 +99,9 @@ export async function POST(
                 if (isWinner && resultType === "regular") {
                     update.$inc["stats.wins"] = 1;
                     update.$push = { "stats.form": "W" };
+                } else if (resultType === "draw") {
+                    update.$inc["stats.draws"] = 1;
+                    update.$push = { "stats.form": "D" };
                 } else if (isWinner && resultType === "penalty") {
                     update.$inc["stats.penaltyWins"] = 1;
                     update.$push = { "stats.form": "PW" };
@@ -137,6 +141,9 @@ export async function POST(
                 if (isWinner && resultType === "regular") {
                     update.$inc["stats.wins"] = 1;
                     update.$push = { "stats.form": "W" };
+                } else if (resultType === "draw") {
+                    update.$inc["stats.draws"] = 1;
+                    update.$push = { "stats.form": "D" };
                 } else if (isWinner && resultType === "penalty") {
                     update.$inc["stats.penaltyWins"] = 1;
                     update.$push = { "stats.form": "PW" };

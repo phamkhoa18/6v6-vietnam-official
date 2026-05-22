@@ -374,6 +374,15 @@
   scrollbar-width: none;
 }
 
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
 /* ===== Premium Crimson-Gold Utilities ===== */
 .bg-crimson-gold {
   background: linear-gradient(135deg, #A01B1B 0%, #8B1818 30%, #6B1212 60%, #A01B1B 100%);

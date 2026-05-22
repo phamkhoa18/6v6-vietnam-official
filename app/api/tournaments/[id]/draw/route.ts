@@ -59,9 +59,7 @@ export async function POST(
         };
 
         if (tournament.format === "single_elimination") {
-            for (let i = 0; i < shuffled.length; i++) {
-                await updateSeed(shuffled[i]._id.toString(), i + 1);
-            }
+            // No auto-seed assignment — seeds are only set manually by manager
 
             const totalSlots = Math.pow(2, Math.ceil(Math.log2(shuffled.length)));
             const round1Matches = totalSlots / 2;

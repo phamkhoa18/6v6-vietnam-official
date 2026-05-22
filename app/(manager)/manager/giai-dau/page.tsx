@@ -18,6 +18,7 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { tournamentAPI } from "@/lib/api";
 import { toast } from "sonner";
+import { useConfirmDialog } from "@/components/ui/confirm-dialog";
 
 const ITEMS_PER_PAGE = 12;
 
@@ -64,8 +65,17 @@ export default function ManagerGiaiDauPage() {
         }
     };
 
+    const confirmDialog = useConfirmDialog();
+
     const handleDelete = async (id: string, title: string) => {
-        if (!confirm(`Bạn có chắc muốn xóa "${title}"?`)) return;
+        const isConfirmed = await confirmDialog.confirm({
+            title: "Xóa giải đấu",
+            description: `Bạn có chắc muốn xóa "${title}"?`,
+            confirmText: "Xóa",
+            cancelText: "Hủy",
+            variant: "danger"
+        });
+        if (!isConfirmed) return;
         try {
             const res = await tournamentAPI.delete(id);
             if (res.success) {

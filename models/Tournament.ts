@@ -43,6 +43,7 @@ export interface ITournament extends Document {
     // Scoring per match
     scoring: {
         pointsPerWin: number;           // default: 3
+        pointsPerDraw: number;          // default: 1
         pointsPerPenaltyWin: number;    // default: 2
         pointsPerPenaltyLoss: number;   // default: 1
         pointsPerLoss: number;          // default: 0
@@ -85,6 +86,7 @@ export interface ITournament extends Document {
     videos?: {
         url: string;
         title: string;
+        type: "youtube" | "shorts" | "tiktok" | "other";
         createdAt: Date;
     }[];
 
@@ -176,6 +178,7 @@ const TournamentSchema = new Schema<ITournament>(
         // Scoring
         scoring: {
             pointsPerWin: { type: Number, default: 3 },
+            pointsPerDraw: { type: Number, default: 1 },
             pointsPerPenaltyWin: { type: Number, default: 2 },
             pointsPerPenaltyLoss: { type: Number, default: 1 },
             pointsPerLoss: { type: Number, default: 0 },
@@ -224,6 +227,7 @@ const TournamentSchema = new Schema<ITournament>(
             {
                 url: String,
                 title: String,
+                type: { type: String, enum: ["youtube", "shorts", "tiktok", "other"], default: "youtube" },
                 createdAt: { type: Date, default: Date.now },
             }
         ]

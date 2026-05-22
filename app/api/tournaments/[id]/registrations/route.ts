@@ -24,12 +24,19 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
         const status = searchParams.get("status");
 
         const query: any = { tournament: id };
-        if (status && status !== "all") query.status = status;
+        if (status && status !== "all") {
+            // 'active' is functionally same as 'approved' (after team creation)
+            if (status === "approved") {
+                query.status = { $in: ["approved", "active"] };
+            } else {
+                query.status = status;
+            }
+        }
 
         const registrations = await Registration.find(query)
-            .populate("user", "name email avatar playerId phone")
-            .populate("player2", "name avatar playerId")
-            .populate("player3", "name avatar playerId")
+            .populate("user", "name email avatar playerId gamerId phone facebookName facebookLink province dateOfBirth nickname")
+            .populate("player2", "name avatar playerId gamerId facebookName facebookLink province dateOfBirth nickname")
+            .populate("player3", "name avatar playerId gamerId facebookName facebookLink province dateOfBirth nickname")
             .populate("approvedBy", "name")
             .sort({ createdAt: -1 })
             .lean();
@@ -54,13 +61,53 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
         const body = await req.json();
         const { registrationId, action, rejectionReason } = body;
 
-        if (!registrationId || !["approve", "reject"].includes(action)) {
+        if (!registrationId || !["approve", "reject", "update_info"].includes(action)) {
             return apiError("Thiếu thông tin", 400);
         }
 
         const tournament = await Tournament.findById(id);
         const reg = await Registration.findOne({ _id: registrationId, tournament: id });
         if (!reg) return apiError("Đăng ký không tồn tại", 404);
+
+        if (action === "update_info") {
+            const fields = [
+                "playerName", "teamName", "teamShortName", "phone", "email",
+                "facebookName", "facebookLink", "province", "dateOfBirth", "notes",
+                "personalPhoto", "teamLineupPhoto",
+                "player2", "player2Name", "player2FacebookName", "player2FacebookLink",
+                "player3", "player3Name", "player3FacebookName", "player3FacebookLink"
+            ];
+            fields.forEach(f => {
+                if (body[f] !== undefined) {
+                    (reg as any)[f] = body[f];
+                }
+            });
+            await reg.save();
+
+            // Sync with Team if approved
+            if (reg.status === "active" || reg.status === "approved") {
+                if (tournament?.gameMode !== "1v1") {
+                    const { default: Team } = await import("@/models/Team");
+                    const team = await Team.findOne({ tournament: id, captain: reg.user });
+                    if (team) {
+                        if (reg.teamName) team.name = reg.teamName;
+                        if (reg.teamShortName) team.shortName = reg.teamShortName;
+                        if (reg.teamLogo || reg.personalPhoto || reg.teamLineupPhoto) {
+                            team.logo = reg.teamLogo || reg.personalPhoto || reg.teamLineupPhoto;
+                        }
+                        
+                        // Sync members
+                        const members: any[] = [{ user: reg.user, role: "captain", joinedAt: new Date() }];
+                        if (reg.player2) members.push({ user: reg.player2 as any, role: "player", joinedAt: new Date() });
+                        if (reg.player3) members.push({ user: reg.player3 as any, role: "player", joinedAt: new Date() });
+                        team.members = members;
+                        
+                        await team.save();
+                    }
+                }
+            }
+            return apiResponse(reg, 200, "Đã cập nhật thông tin thành công");
+        }
 
         if (action === "approve") {
             reg.status = "active"; // Set to active so it's ready
@@ -72,7 +119,7 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
                 const { default: Team } = await import("@/models/Team");
                 const existingTeam = await Team.findOne({ tournament: id, captain: reg.user });
                 if (!existingTeam) {
-                    const members = [{ user: reg.user, role: "captain", joinedAt: new Date() }];
+                    const members: any[] = [{ user: reg.user, role: "captain", joinedAt: new Date() }];
                     if (reg.player2) members.push({ user: reg.player2 as any, role: "player", joinedAt: new Date() });
                     if (reg.player3) members.push({ user: reg.player3 as any, role: "player", joinedAt: new Date() });
                     

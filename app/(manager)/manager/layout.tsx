@@ -54,9 +54,8 @@ const mainBottomLinks = [
 const tournamentSidebarLinks = (id: string) => [
     { label: "Tổng quan", href: `/manager/giai-dau/${id}`, icon: Eye },
     { label: "Đăng ký thi đấu", href: `/manager/giai-dau/${id}/dang-ky`, icon: UserCheck },
-    { label: "Bảng đấu", href: `/manager/giai-dau/${id}/bang-dau`, icon: ClipboardList },
+    { label: "Sơ đồ đấu", href: `/manager/giai-dau/${id}/bang-dau`, icon: Swords },
     { label: "Lịch thi đấu", href: `/manager/giai-dau/${id}/lich`, icon: Calendar },
-    { label: "Bóc thăm", href: `/manager/giai-dau/${id}/boc-tham`, icon: Swords },
     { label: "Video", href: `/manager/giai-dau/${id}/video`, icon: PlaySquare },
     { label: "Cài đặt", href: `/manager/giai-dau/${id}/cai-dat`, icon: Settings },
 ];

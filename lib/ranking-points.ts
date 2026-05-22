@@ -13,6 +13,7 @@
 // Default scoring config
 export const DEFAULT_SCORING = {
     pointsPerWin: 3,
+    pointsPerDraw: 1,
     pointsPerPenaltyWin: 2,
     pointsPerPenaltyLoss: 1,
     pointsPerLoss: 0,
@@ -88,8 +89,8 @@ export function calculateMatchPoints(
 ): {
     pointsA: number;
     pointsB: number;
-    winner: "A" | "B";
-    resultType: "regular" | "penalty";
+    winner: "A" | "B" | null;
+    resultType: "regular" | "penalty" | "draw";
 } {
     // Regular time win
     if (scoreA > scoreB) {
@@ -127,12 +128,12 @@ export function calculateMatchPoints(
         };
     }
 
-    // Draw without penalty (should not happen in most cases, but handle gracefully)
+    // Draw without penalty — both get draw points
     return {
-        pointsA: scoring.pointsPerPenaltyLoss,
-        pointsB: scoring.pointsPerPenaltyLoss,
-        winner: "A",
-        resultType: "regular",
+        pointsA: scoring.pointsPerDraw ?? 1,
+        pointsB: scoring.pointsPerDraw ?? 1,
+        winner: null,
+        resultType: "draw",
     };
 }
 
