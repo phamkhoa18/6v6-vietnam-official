@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import {
@@ -41,7 +41,7 @@ const MOCK_PLAYERS: Player[] = [
     { rank: 7, user: { _id: "7", name: "Đặng Văn G", avatar: "https://i.pravatar.cc/150?u=7", nickname: "Rồng trắng", playerId: 1007 }, teamName: "Huế", totalPoints: 650, totalMatches: 7, tournamentsPlayed: 2 },
 ];
 
-export default function BXHPage() {
+function BXHContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const filterParam = searchParams.get("filter") as "1v1" | "2v2" | "3v3" | null;
@@ -444,6 +444,14 @@ export default function BXHPage() {
                 </div>
             </section >
 
-                    </div>
+        </div>
+    );
+}
+
+export default function BXHPage() {
+    return (
+        <Suspense fallback={<div className="pt-24 text-center">Đang tải dữ liệu...</div>}>
+            <BXHContent />
+        </Suspense>
     );
 }

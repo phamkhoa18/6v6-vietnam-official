@@ -67,8 +67,8 @@ export async function POST(
         match.penaltyB = penaltyB;
         match.pointsA = result.pointsA;
         match.pointsB = result.pointsB;
-        match.winner = result.winner;
-        match.resultType = result.resultType;
+        match.winner = result.winner === null ? undefined : result.winner;
+        match.resultType = result.resultType === "draw" ? "regular" : result.resultType;
         match.status = "completed";
         match.playedAt = new Date();
         await match.save();
