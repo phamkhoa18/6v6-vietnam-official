@@ -73,7 +73,7 @@ export async function PUT(req: NextRequest) {
             }
         }
 
-        const post = await Post.findByIdAndUpdate(postId, updateData, { new: true })
+        const post = await Post.findByIdAndUpdate(postId, updateData, { returnDocument: 'after' })
             .populate("author", "name email avatar");
 
         if (!post) return apiError("Không tìm thấy bài viết", 404);

@@ -21,7 +21,7 @@ CounterSchema.statics.getNextSequence = async function (name: string): Promise<n
     const counter = await this.findByIdAndUpdate(
         name,
         { $inc: { seq: 1 } },
-        { new: true, upsert: true }
+        { returnDocument: 'after', upsert: true }
     );
     return counter.seq;
 };

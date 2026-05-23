@@ -59,7 +59,7 @@ async function seed() {
     const result = await SiteMenu.findOneAndUpdate(
         { location: "navbar" },
         { location: "navbar", items: navbarItems },
-        { upsert: true, new: true }
+        { upsert: true, returnDocument: 'after' }
     );
 
     console.log("✅ Navbar menu seeded successfully!");

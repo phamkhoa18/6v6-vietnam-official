@@ -47,7 +47,7 @@ export async function PUT(req: NextRequest) {
                 ...(teamName !== undefined && { teamName }),
                 ...(facebookName !== undefined && { facebookName }), ...(facebookLink !== undefined && { facebookLink }),
             },
-            { new: true, runValidators: true }
+            { returnDocument: 'after', runValidators: true }
         );
 
         if (!user) return apiError("Không tìm thấy người dùng", 404);

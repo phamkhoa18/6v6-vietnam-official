@@ -34,7 +34,7 @@ export async function PUT(req: NextRequest) {
         const menu = await SiteMenu.findOneAndUpdate(
             { location },
             { items, updatedBy: authResult.user._id },
-            { upsert: true, new: true }
+            { upsert: true, returnDocument: 'after' }
         );
 
         return apiResponse({ menu }, 200, "Đã cập nhật menu");

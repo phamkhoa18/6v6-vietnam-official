@@ -44,8 +44,6 @@ const UserSchema = new Schema<IUser>(
     {
         playerId: {
             type: Number,
-            unique: true,
-            sparse: true,
         },
         name: {
             type: String,
@@ -164,8 +162,8 @@ const UserSchema = new Schema<IUser>(
 );
 
 // Indexes
+UserSchema.index({ playerId: 1 }, { unique: true, sparse: true });
 UserSchema.index({ role: 1 });
-UserSchema.index({ playerId: 1 });
 
 // Pre-save hook: auto-generate Player ID for new users
 UserSchema.pre("save", async function () {

@@ -23,7 +23,7 @@ export async function PUT(
         const match = await Match.findOneAndUpdate(
             { _id: matchId, tournament: id },
             { $set: body },
-            { new: true, runValidators: true }
+            { returnDocument: 'after', runValidators: true }
         )
             .populate("teamA", "name shortName logo")
             .populate("teamB", "name shortName logo");

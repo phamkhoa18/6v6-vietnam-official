@@ -72,8 +72,8 @@ export async function PUT(
         if (group !== undefined) update.group = group;
 
         const participant = is1v1
-            ? await Registration.findOneAndUpdate({ _id: participantId, tournament: id }, { $set: update }, { new: true })
-            : await Team.findOneAndUpdate({ _id: participantId, tournament: id }, { $set: update }, { new: true });
+            ? await Registration.findOneAndUpdate({ _id: participantId, tournament: id }, { $set: update }, { returnDocument: 'after' })
+            : await Team.findOneAndUpdate({ _id: participantId, tournament: id }, { $set: update }, { returnDocument: 'after' });
 
         if (!participant) {
             return NextResponse.json({ success: false, message: "Không tìm thấy" }, { status: 404 });

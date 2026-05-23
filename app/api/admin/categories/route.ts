@@ -91,7 +91,7 @@ export async function PUT(req: NextRequest) {
 
         if (!categoryId) return apiError("Thiếu categoryId", 400);
 
-        const category = await Category.findByIdAndUpdate(categoryId, updateData, { new: true })
+        const category = await Category.findByIdAndUpdate(categoryId, updateData, { returnDocument: 'after' })
             .populate("parent", "name slug");
 
         if (!category) return apiError("Không tìm thấy danh mục", 404);
